@@ -51,6 +51,10 @@ input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid 
 @keyframes s { to { transform: rotate(360deg) } }
 @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 3s } }
 .f { text-align: center; color: var(--muted); font-size: 14px }
+.pw { position: relative }
+.pw input { padding-inline-end: 56px }
+.eye { position: absolute; inset-inline-end: 6px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border: 0; border-radius: 10px; background: none; cursor: pointer; font-size: 22px; line-height: 1; color: var(--muted) }
+.eye:hover { background: var(--line) }
 [hidden] { display: none !important }
 </style>
 </head>
@@ -74,7 +78,7 @@ input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid 
 (function () {
   'use strict';
   var API = "https://script.google.com/macros/s/AKfycbx9VEANkpfuMCsm3b2cQ2Y2oO7zpYqWBzh0WGQCb6dGzxj4eoNbY8PcjLfmzz9ZX1y_eg/exec";            // כתובת החלק שבענן (Apps Script)
-  var BIN = "g-4694fc6eeb.bin";            // המחולל המוצפן
+  var BIN = "g-95fc3988d8.bin";            // המחולל המוצפן
   var GOOGLE_ID = "";   // ריק = בלי כפתור גוגל
   var KEY_PARENT_H = 24, KEY_KID_D = 7;
 
@@ -102,6 +106,7 @@ input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid 
     server: 'משהו השתבש אצלנו. נסו שוב בעוד רגע.',
     soon: 'מחולל האימונים עוד רגע נפתח למנויי המועדון 🚀',
     net: 'אין חיבור כרגע. בדקו את האינטרנט ונסו שוב.',
+    kicked: 'נותקתם במכשיר הזה, כי נכנסו לחשבון ממכשיר אחר. אפשר להיכנס בכל מכשיר עד 3 מכשירים, ומכשיר רביעי מנתק את הישן ביותר.',
   };
   function notMember(r) {
     return 'המייל הזה לא מופיע אצלנו ברשימת המנויים של המועדון.<br>' +
@@ -109,7 +114,20 @@ input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid 
       'צריכים עזרה? כתבו לנו בקבוצת הווטסאפ האישית שלכם.' +
       (r && r.join ? '<br><a href="' + esc(r.join) + '" target="_blank" rel="noopener">עדיין לא במועדון? להצטרפות</a>' : '');
   }
-  function errText(r) { return r && r.why === 'notmember' ? notMember(r) : esc(MSG[r && r.why] || MSG.server); }
+  // 👁️ אבירם 29.10: עין שמראה את הסיסמה
+  var EYE = '<button type="button" class="eye" aria-label="להציג את הסיסמה" title="להציג את הסיסמה">👁️</button>';
+  card.addEventListener('click', function (e) {
+    var b = e.target.closest('.eye'); if (!b) return;
+    var inp = b.parentNode.querySelector('input'), show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password'; b.textContent = show ? '🙈' : '👁️';
+    b.setAttribute('aria-label', show ? 'להסתיר את הסיסמה' : 'להציג את הסיסמה'); b.title = b.getAttribute('aria-label');
+  });
+  function ended(r) {
+    return 'המנוי שלכם למועדון הסתיים, ולכן מחולל האימונים נסגר.<br>רוצים לחזור? נשמח מאוד 💙' +
+      (r && r.join ? '<br><a href="' + esc(r.join) + '" target="_blank" rel="noopener">לחזרה למועדון</a>' : '');
+  }
+  function errText(r) { return r && r.why === 'notmember' ? notMember(r) : r && r.why === 'ended' ? ended(r) : esc(MSG[r && r.why] || MSG.server); }
+  function closed(r) { return r && /^(out|notmember|ended|kicked)$/.test(r.why); }
 
   // ---------- פתיחת המחולל המוצפן ----------
   var stop = false; // בדיקה ברקע גילתה שהגישה נסגרה: לא פותחים, טוענים מחדש
@@ -133,39 +151,45 @@ input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid 
   var kt = (location.hash.match(/[#&]t=([0-9a-f]{20,})/) || [])[1];
   var kidMode = /[#&]k=[\w-]+/.test(location.hash) && kt;
   var acct = store.get('club-acct'), kc = store.get('club-key');
+  // 🛡️ מזהה המכשיר (לקישור הילד: עד 2 מכשירים לכל ילד)
+  var dev = store.get('club-dev');
+  if (!/^[a-z0-9]{12,40}$/.test(dev || '') && window.crypto && crypto.getRandomValues) { dev = ''; var rb = crypto.getRandomValues(new Uint8Array(12)); for (var ri = 0; ri < rb.length; ri++) dev += ('0' + rb[ri].toString(16)).slice(-2); store.set('club-dev', dev); }
+  function kidAsk() { return { a: 'kid', kt: kt, d: dev, t: acct && acct.t || undefined }; }
 
   function kidStart() {
     var fresh = kc && kc.kt === kt && Date.now() - kc.at < KEY_KID_D * 864e5;
-    if (fresh) { run(kc.k).catch(kidFail); post({ a: 'kid', kt: kt }).then(function (r) { if (!r.ok && r.why === 'kid') { store.del('club-key'); reload(); } }, function () {}); return; }
+    if (fresh) { run(kc.k).catch(kidFail); post(kidAsk()).then(function (r) { if (!r.ok && (r.why === 'kid' || r.why === 'kiddev')) { store.del('club-key'); reload(); } }, function () {}); return; }
     loading('פותחים את האימון...');
-    post({ a: 'kid', kt: kt }).then(function (r) {
-      if (!r.ok) return kidFail();
+    post(kidAsk()).then(function (r) {
+      if (!r.ok) return kidFail(r);
       store.set('club-key', { k: r.key, at: Date.now(), kt: kt }); return run(r.key);
     }).catch(kidFail);
   }
-  function kidFail() {
+  function kidFail(r) {
+    if (r && r.why === 'kiddev') { card.innerHTML = '<h2>הקישור כבר פתוח במכשירים אחרים 📱</h2><p>אפשר לפתוח את האימון עד 2 מכשירים לכל ילד.</p><p class="muted">הורים: במחולל האימונים, ב"הגדרות נוספות", יש כפתור "איפוס מכשירים". לוחצים, ופותחים את הקישור כאן שוב.</p>'; return; }
     card.innerHTML = '<h2>הקישור הזה כבר לא פעיל 🙈</h2><p>בקשו מאמא או מאבא קישור חדש לאימון.</p>';
   }
 
   // ---------- הורה ----------
   function parentStart() {
-    if (!(acct && acct.t)) return askEmail();
+    var why = store.get('club-why'); store.del('club-why');
+    if (!(acct && acct.t)) return why && why.why !== 'out' ? askEmail(why.email || '', why) : askEmail();
     var fresh = kc && !kc.kt && Date.now() - kc.at < KEY_PARENT_H * 36e5;
     if (fresh) { run(kc.k).catch(function () { store.del('club-key'); askEmail(); }); revalidate(); return; }
     loading('בודקים את המנוי...');
     post({ a: 'me', t: acct.t }).then(function (r) {
-      if (!r.ok) { signOut(); return r.why === 'notmember' ? askEmail(acct.email, r) : askEmail(acct.email); }
+      if (!r.ok) { var em0 = acct.email; signOut(); return /^(notmember|ended|kicked)$/.test(r.why) ? askEmail(em0, r) : askEmail(em0); }
       keep(r, acct.t); return run(r.key);
     }).catch(function () { netRetry(parentStart); });
   }
   function revalidate() {
     post({ a: 'me', t: acct.t }).then(function (r) {
-      if (r.ok) { var a = store.get('club-acct') || acct; a.kt = r.kt; store.set('club-acct', a); store.set('club-key', { k: r.key, at: Date.now() }); return; }
-      if (r.why === 'out' || r.why === 'notmember') { signOut(); reload(); }
+      if (r.ok) { var a = store.get('club-acct') || acct; a.kt = r.kt; a.fam = r.fam || ''; a.devs = r.devs; a.devMax = r.devMax; store.set('club-acct', a); store.set('club-key', { k: r.key, at: Date.now() }); return; }
+      if (closed(r)) { store.set('club-why', { why: r.why, join: r.join, email: acct.email }); signOut(); reload(); }
     }, function () {});
   }
   function keep(r, t) {
-    acct = { api: API, t: t, email: r.email, kids: r.kids || [], kt: r.kt };
+    acct = { api: API, t: t, email: r.email, kids: r.kids || [], kt: r.kt, fam: r.fam || '', devs: r.devs, devMax: r.devMax };
     store.set('club-acct', acct); store.set('club-key', { k: r.key, at: Date.now() });
   }
   function signOut() { store.del('club-acct'); store.del('club-key'); acct = null; }
@@ -214,7 +238,7 @@ input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid 
     card.innerHTML =
       '<h2>שלום שוב 👋</h2><p class="muted" dir="ltr" style="text-align:right">' + esc(em) + '</p>' +
       '<form id="fp"><label for="pw">הסיסמה שלכם למחולל</label>' +
-      '<input id="pw" type="password" autocomplete="current-password" required>' +
+      '<div class="pw"><input id="pw" type="password" autocomplete="current-password" required>' + EYE + '</div>' +
       '<p class="err" id="er" hidden></p>' +
       '<button class="go" type="submit">כניסה</button></form>' +
       '<button class="link" type="button" id="forgot">שכחתי סיסמה, שלחו לי קוד למייל</button>' +
@@ -244,7 +268,7 @@ input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid 
       '<form id="fc"><label for="cd">הקוד מהמייל</label>' +
       '<input class="code" id="cd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required>' +
       '<label for="np">' + (reset ? 'סיסמה חדשה' : 'בחרו סיסמה למחולל') + '</label>' +
-      '<input id="np" type="password" autocomplete="new-password" minlength="6" required>' +
+      '<div class="pw"><input id="np" type="password" autocomplete="new-password" minlength="6" required>' + EYE + '</div>' +
       '<p class="muted" style="margin-top:-6px">לפחות 6 תווים. איתה תיכנסו בפעמים הבאות.</p>' +
       '<p class="err" id="er" hidden></p>' +
       '<button class="go" type="submit">כניסה למחולל 🚀</button></form>' +
