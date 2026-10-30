@@ -130,6 +130,7 @@ body.duo .q .pic { height: min(18vh, 170px) }
 #pz .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center }
 #pz .row button, .mus { font: inherit; font-weight: 800; font-size: 17px; color: #fff; background: rgba(255,255,255,.1); border: 2px solid rgba(255,255,255,.18); border-radius: 999px; padding: 9px 18px; cursor: pointer }
 .mus[aria-pressed="true"] { background: rgba(57,217,138,.22); border-color: var(--good) }
+.musRow { display: flex; flex-direction: column; align-items: center; gap: 6px } .musRow > b { font-size: 16px; font-weight: 900 } .musRow > div { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center } .musRow .mus { font-size: 15px; padding: 7px 14px }
 @media (max-height: 620px) { #pz { gap: 8px; padding: 10px } #pz .big { font-size: 54px } #pz h1 { font-size: 32px } #pz p { font-size: 16px } #pz .go { font-size: 22px; padding: 10px 30px } }
 </style></head><body>
 
@@ -156,7 +157,7 @@ body.duo .q .pic { height: min(18vh, 170px) }
       <p id="pzTxt">התרגיל מחכה. ממשיכים מתי שרוצים, והרובוט עומד במקום.</p>
       <button class="go" id="pzGo">▶️ ממשיכים</button>
       <div class="row" id="pzRow"><button id="pzRe">🔄 מתחילים מחדש</button><button id="pzMenu">🏠 חזרה לתפריט</button><button id="pzX" hidden>✕ יציאה מהמשחק</button></div>
-      <button class="mus" data-mus aria-pressed="false">🎵 מוזיקה רגועה: כבויה</button>
+      <div class="musRow" data-musrow></div>
     </div>
   </div>
 </div>
@@ -180,7 +181,7 @@ body.duo .q .pic { height: min(18vh, 170px) }
         <button data-l="1" aria-pressed="false">קל</button><button data-l="2" aria-pressed="true">רגיל</button><button data-l="3" aria-pressed="false">מאתגר</button>
       </div>
       <div class="spd" id="spd"></div>
-      <button class="mus" data-mus aria-pressed="false">🎵 מוזיקה רגועה: כבויה</button>
+      <div class="musRow" data-musrow></div>
       <button class="go" id="go">מתחילים! 🚀</button>
     </div>
     <div class="over" id="joinv" hidden>
@@ -549,9 +550,9 @@ body.duo .q .pic { height: min(18vh, 170px) }
   function au() { if (st.mute) return null; try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); return AC; } catch (e) { return null; } }
   function tone(f, t, len, type, vol) { var c = au(); if (!c) return; var o = c.createOscillator(), g = c.createGain(); o.type = type || 'triangle'; o.frequency.setValueAtTime(f, c.currentTime + t); g.gain.setValueAtTime(vol || .18, c.currentTime + t); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + t + len); o.connect(g); g.connect(c.destination); o.start(c.currentTime + t); o.stop(c.currentTime + t + len + .05); }
   function sWin() { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, i * .07, .22); }); }
-  function sBot() { tone(330, 0, .18, 'square', .12); tone(220, .14, .3, 'square', .12); }
-  function sBad() { tone(180, 0, .2, 'sawtooth', .12); }
-  function sTick() { tone(1500, 0, .04, 'square', .05); }
+  function sBot() { if (MU.on) return; tone(330, 0, .18, 'square', .12); tone(220, .14, .3, 'square', .12); }
+  function sBad() { if (MU.on) return; tone(180, 0, .2, 'sawtooth', .12); }
+  function sTick() { if (MU.on) return; tone(1500, 0, .04, 'square', .05); }
   function sGo() { tone(392, 0, .15); tone(784, .15, .3); }
 
   // ---------- קונפטי ----------
@@ -950,9 +951,15 @@ body.duo .q .pic { height: min(18vh, 170px) }
 
   // ---------- 🎵 מוזיקה רגועה לריכוז (כבויה כברירת מחדל, הילד מדליק). נוצרת בדפדפן, בלי קובץ ----------
   // אקורדים רכים ואיטיים + צלילים בודדים מסולם פנטטוני, הכל דרך פילטר רך והד קטן. שקטה, מתחת לצלילי המשחק
-  var MU = { want: false, out: null, iv: 0, t: 0, n: 0, last: 0 }, MKEY = 'grab-music-' + (CFG.who || '');
-  try { MU.want = localStorage.getItem(MKEY) === '1'; } catch (e) {}
-  var E8 = 60 / 66 / 2, CH = [[48, 55, 59, 64], [45, 52, 55, 60], [41, 48, 52, 57], [43, 50, 55, 59]], PENT = [72, 74, 76, 79, 81];
+  var MU = { want: false, style: 'calm', out: null, iv: 0, t: 0, n: 0, last: 0 }, MKEY = 'grab-music-' + (CFG.who || '');
+  // כל סגנון: קצב, אקורדים, צלילים עליונים, כמה צלילים בודדים, עוצמת רקע, פילטר, תוף
+  var STY = {
+    calm:  { name: '🌊 רגועה', bpm: 66, ch: [[48, 55, 59, 64], [45, 52, 55, 60], [41, 48, 52, 57], [43, 50, 55, 59]], mel: [72, 74, 76, 79, 81], p: .3, pad: .028, padAtt: 1.6, bass: .05, lp: 1500, tone: 'triangle', len: 1.4 },
+    piano: { name: '🎹 פסנתר שקט', bpm: 60, ch: [[41, 48, 52, 57], [40, 47, 50, 55], [38, 45, 48, 53], [36, 43, 47, 52]], mel: [69, 72, 74, 76, 79, 81, 84], p: .45, pad: .012, padAtt: 1, bass: .035, lp: 2600, tone: 'sine', len: 2.4, piano: true },
+    space: { name: '✨ חלל', bpm: 50, ch: [[38, 45, 52, 57], [41, 48, 53, 60], [36, 43, 50, 55], [43, 50, 55, 62]], mel: [81, 84, 86, 88, 91], p: .12, pad: .04, padAtt: 3, bass: 0, lp: 900, tone: 'sine', len: 3 },
+    beat:  { name: '🥁 קצב רך', bpm: 84, ch: [[45, 52, 55, 60], [41, 48, 52, 57], [36, 43, 48, 52], [43, 50, 55, 59]], mel: [69, 72, 74, 76, 79], p: .25, pad: .02, padAtt: .8, bass: .045, lp: 1800, tone: 'triangle', len: 1, drums: true }
+  };
+  try { var mv = localStorage.getItem(MKEY); if (mv && mv !== '0') { MU.want = true; if (STY[mv]) MU.style = mv; } } catch (e) {}
   var m2f = function (m) { return 440 * Math.pow(2, (m - 69) / 12); };
   function actx() { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); return AC; } catch (e) { return null; } }
   function mNote(c, f, t, len, type, vol, att, echo) {
@@ -960,16 +967,24 @@ body.duo .q .pic { height: min(18vh, 170px) }
     g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + att); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
     o.connect(g); g.connect(MU.bus); if (echo) g.connect(MU.echo); o.start(t); o.stop(t + len + .1);
   }
+  function kick(c, t) { var o = c.createOscillator(), g = c.createGain(); o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(42, t + .18); g.gain.setValueAtTime(.16, t); g.gain.exponentialRampToValueAtTime(.0001, t + .3); o.connect(g); g.connect(MU.bus); o.start(t); o.stop(t + .35); }
+  function hat(c, t) {
+    if (!MU.noise) { var b = c.createBuffer(1, c.sampleRate * .1, c.sampleRate), d = b.getChannelData(0); for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; MU.noise = b; }
+    var s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); s.buffer = MU.noise; f.type = 'highpass'; f.frequency.value = 7000;
+    g.gain.setValueAtTime(.025, t); g.gain.exponentialRampToValueAtTime(.0001, t + .06); s.connect(f); f.connect(g); g.connect(MU.out); s.start(t); s.stop(t + .08);
+  }
   function mTick() {
-    var c = AC; if (!c) return;
+    var c = AC; if (!c) return; var S = STY[MU.style], E8 = 60 / S.bpm / 2;
     while (MU.t < c.currentTime + 1.5) {
-      var t = MU.t, i = MU.n, ch = CH[Math.floor(i / 16) % 4];
-      if (i % 16 === 0) ch.forEach(function (m, j) { mNote(c, m2f(m), t, 16 * E8 + 1.6, j ? 'sine' : 'triangle', .028, 1.6, false); });
-      if (i % 8 === 0) mNote(c, m2f(ch[0] - 12), t, 3.2, 'sine', .05, .08, false);
-      if (i % 16 !== 0 && Math.random() < .3) {
-        var pool = PENT.concat(ch.map(function (m) { return m + 24; }).filter(function (m) { return m <= 84; })), m = pool[Math.floor(Math.random() * pool.length)];
+      var t = MU.t, i = MU.n, ch = S.ch[Math.floor(i / 16) % 4];
+      if (i % 16 === 0) ch.forEach(function (m, j) { mNote(c, m2f(m), t, 16 * E8 + S.padAtt, j ? 'sine' : 'triangle', S.pad, S.padAtt, false); });
+      if (S.bass && i % 8 === 0) mNote(c, m2f(ch[0] - 12), t, 3.2, 'sine', S.bass, .08, false);
+      if (S.drums) { if (i % 4 === 0) kick(c, t); if (i % 2 === 1) hat(c, t); }
+      if (i % 16 !== 0 && Math.random() < S.p) {
+        var pool = S.mel.concat(ch.map(function (m) { return m + 24; }).filter(function (m) { return m <= S.mel[S.mel.length - 1]; })), m = pool[Math.floor(Math.random() * pool.length)];
         if (m === MU.last) m = pool[(pool.indexOf(m) + 1) % pool.length];
-        MU.last = m; mNote(c, m2f(m), t, 1.4, 'triangle', .035, .015, true);
+        MU.last = m; mNote(c, m2f(m), t, S.len, S.tone, .035, .012, true);
+        if (S.piano) mNote(c, m2f(m) * 2, t, S.len * .5, 'sine', .008, .005, false); // צליל עליון קטן = נשמע כמו פסנתר
       }
       MU.t += E8; MU.n++;
     }
@@ -981,25 +996,34 @@ body.duo .q .pic { height: min(18vh, 170px) }
       var c = actx(); if (!c) return;
       if (!MU.out) {
         MU.out = c.createGain(); MU.out.gain.value = 0; MU.bus = c.createGain(); MU.echo = c.createGain(); MU.echo.gain.value = .45;
-        var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1500;
-        var dl = c.createDelay(1); dl.delayTime.value = E8 * 1.5; var fb = c.createGain(); fb.gain.value = .3;
-        MU.bus.connect(lp); MU.echo.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(lp); lp.connect(MU.out); MU.out.connect(c.destination);
+        MU.lp = c.createBiquadFilter(); MU.lp.type = 'lowpass';
+        MU.dl = c.createDelay(1); var fb = c.createGain(); fb.gain.value = .3;
+        MU.bus.connect(MU.lp); MU.echo.connect(MU.dl); MU.dl.connect(fb); fb.connect(MU.dl); MU.dl.connect(MU.lp); MU.lp.connect(MU.out); MU.out.connect(c.destination);
       }
-      if (!MU.iv) { MU.t = c.currentTime + .15; MU.iv = setInterval(mTick, 250); mTick(); }
+      var S = STY[MU.style]; MU.lp.frequency.setTargetAtTime(S.lp, c.currentTime, .3); MU.dl.delayTime.setValueAtTime(Math.min(.95, 60 / S.bpm * .75), c.currentTime);
+      if (!MU.iv) { MU.t = c.currentTime + .15; MU.n = 0; MU.iv = setInterval(mTick, 250); mTick(); }
     } else if (MU.iv) { clearInterval(MU.iv); MU.iv = 0; }
     mVol(); drawMus();
   }
   function drawMus() {
-    $('mus').classList.toggle('mon', !!MU.want);
-    [].forEach.call(document.querySelectorAll('[data-mus]'), function (b) { b.setAttribute('aria-pressed', String(!!MU.want)); b.textContent = '🎵 מוזיקה רגועה: ' + (MU.want ? 'פועלת' : 'כבויה'); });
+    $('mus').classList.toggle('mon', !!MU.want); $('mus').title = MU.want ? 'מוזיקה: ' + STY[MU.style].name.slice(3) : 'מוזיקה כבויה';
+    var h = '<b>🎵 מוזיקה בזמן המשחק</b><div><button class="mus" data-ms="off" aria-pressed="' + !MU.want + '">🔕 בלי מוזיקה</button>' +
+      Object.keys(STY).map(function (k) { return '<button class="mus" data-ms="' + k + '" aria-pressed="' + (MU.want && MU.style === k) + '">' + STY[k].name + '</button>'; }).join('') + '</div>';
+    [].forEach.call(document.querySelectorAll('[data-musrow]'), function (r) { r.innerHTML = h; });
   }
-  function togMus() { MU.want = !MU.want; try { localStorage.setItem(MKEY, MU.want ? '1' : '0'); } catch (e) {} mOn(MU.want); }
-  $('mus').onclick = togMus;
-  [].forEach.call(document.querySelectorAll('[data-mus]'), function (b) { b.onclick = togMus; });
+  function setMus(k) {
+    var was = MU.want && MU.style;
+    if (k === 'off') MU.want = false; else { MU.want = true; MU.style = k; }
+    try { localStorage.setItem(MKEY, MU.want ? MU.style : '0'); } catch (e) {}
+    if (MU.want && was && was !== MU.style && MU.iv) { clearInterval(MU.iv); MU.iv = 0; if (MU.out) { MU.out.gain.cancelScheduledValues(AC.currentTime); MU.out.gain.setValueAtTime(0, AC.currentTime); } } // מחליפים סגנון: מתחילים נקי
+    mOn(MU.want);
+  }
+  $('mus').onclick = function () { setMus(MU.want ? 'off' : MU.style); };
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-ms]'); if (b) setMus(b.dataset.ms); });
   drawMus();
   $('go').onclick = function () { if ($('go').disabled) return; au(); if (MU.want) mOn(true); $('start').hidden = true; begin(); };
   $('mute').onclick = function () { st.mute = !st.mute; $('mute').textContent = st.mute ? '🔇' : '🔊'; mVol(); };
-  window.__game = { q: function () { return cur && cur.q; }, cur: function () { return cur; }, MU: MU, pause: pause, resume: resume, st: st, T: T, makeQ: makeQ, GROUPS: GROUPS, robotMs: robotMs, kidR: kidR }; // לבדיקה
+  window.__game = { q: function () { return cur && cur.q; }, cur: function () { return cur; }, MU: MU, STY: STY, setMus: setMus, pause: pause, resume: resume, st: st, T: T, makeQ: makeQ, GROUPS: GROUPS, robotMs: robotMs, kidR: kidR }; // לבדיקה
 })();
 </script>
 </body></html>
