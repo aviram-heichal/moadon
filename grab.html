@@ -652,7 +652,7 @@ body.duo .q .pic { height: min(18vh, 170px) }
   });
   function pile(id) { var i = document.createElement('i'); $(id).appendChild(i); $('sk').textContent = '⭐ ' + st.k; $('sb').textContent = st.b + ' ' + (st.mode === 'bot' ? '🤖' : st.pic); }
   function next(ms) { st.n++; var g = st.gen; later(function () { if (g !== st.gen) return; if (st.n >= ROUNDS) { $('bhand').classList.remove('on'); end(); } else if (st.mode === 'bot') newQ(); else hostQ(); }, ms); }
-  function tell(m) { try { if (window.parent !== window) window.parent.postMessage(m, '*'); } catch (x) {} }
+  function tell(m) { try { var o = window.parent !== window ? window.parent : window.opener; if (o) o.postMessage(m, '*'); } catch (x) {} } // 30.10: המשחק נפתח גם בחלון חדש -> התוצאות חוזרות לדפי התרגול
   function end() {
     live(false);
     if (st.mode !== 'bot') return hEnd();
@@ -679,7 +679,7 @@ body.duo .q .pic { height: min(18vh, 170px) }
   chips('lv', 'l', 'lv', Number);
   $('lv').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(Number(x.dataset.l) === st.lv)); });
   if (CFG.close) {
-    var bye = function () { tell({ grab: 'close' }); };
+    var bye = function () { tell({ grab: 'close' }); if (window.parent === window && window.opener) window.close(); };
     $('close').hidden = false; $('close').onclick = bye;
     var x2 = document.createElement('button'); x2.className = 'mute'; x2.textContent = '✕'; x2.setAttribute('aria-label', 'סגירה');
     x2.style.cssText = 'position:absolute;top:12px;left:12px;font-size:22px'; x2.onclick = bye; $('start').appendChild(x2);
