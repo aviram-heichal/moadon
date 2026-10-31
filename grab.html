@@ -354,6 +354,16 @@ body.duo .q .pic { height: min(18vh, 170px) }
     var extra = []; for (var y = 0; y <= 9; y++) if (ds.indexOf(y) < 0) extra.push(y);
     return { show: wd('מה ספרת ' + names[k] + ' במספר <span class="ex-in">' + fmt(n) + '</span>?'), ans: String(c), opts: three(String(c), ds.filter(function (v) { return v !== c; }).map(String), function () { return pick(extra); }) };
   } };
+  // 🎯 עיגול מספרים (31.10): lv1 דו ספרתי לעשרת · lv2 תלת ספרתי לעשרת/למאה · lv3 ארבע ספרות לעשרת/למאה/לאלף. 5 ומעלה = עולים
+  var RND = function (n, p) { return Math.floor((n + p / 2) / p) * p; };
+  T.round = { name: '🎯 עיגול מספרים', g: 1, q: function (lv) {
+    var p = lv === 1 ? 10 : lv === 2 ? pick([10, 100]) : pick([10, 100, 1000]), lo = lv === 1 ? 11 : lv === 2 ? 101 : 1001, hi = lv === 1 ? 99 : lv === 2 ? 999 : 9999, n;
+    do { n = R(lo, hi); if (Math.random() < .2) n = Math.floor(n / p) * p + p / 2; } while (n % p === 0 || n > hi);
+    var c = RND(n, p), dn = Math.floor(n / p) * p, TO = { 10: 'לעשרת הקרובה', 100: 'למאה הקרובה', 1000: 'לאלף הקרוב' };
+    // הטעויות של ילדים: לכיוון השני, למקום אחר, קפיצה אחת יותר/פחות
+    var w = [c === dn ? dn + p : dn, RND(n, p * 10), p > 10 ? RND(n, p / 10) : c + 2 * p, c + p, c - p, dn + 2 * p].filter(function (x) { return x > 0 && x !== c; });
+    return numQ(wd('כמה זה <span class="ex-in">' + fmt(n) + '</span><br>בעיגול ' + TO[p] + '?'), c, w, p);
+  } };
   T.oo = { name: '🧩 סדר פעולות', g: 2, q: function (lv) {
     for (var g = 0; g < 200; g++) {
       var a = R(2, 12), b = R(2, 9), c = R(2, 9), k = lv === 1 ? 0 : lv === 2 ? R(0, 1) : R(1, 3), show, val, lr;
@@ -622,7 +632,7 @@ body.duo .q .pic { height: min(18vh, 170px) }
       if (v === 0 || (a > 0 && b > 0 && plus)) continue;
       return negQ(a + ' ' + (plus ? '+' : '-') + ' ' + NP(b), v, a, plus ? b : -b); }
   } };
-  var GROUPS = [['➕ חשבון בסיסי', ['add', 'sub', 'mul', 'div', 'make']], ['🔢 מספרים', ['dig', 'mul10', 'seq', 'even', 'place', 'oo', 'negOne', 'negTwo']], ['🍕 שברים ועשרוניים', ['frCmp', 'frRed', 'frMix', 'decFr', 'decShift']],
+  var GROUPS = [['➕ חשבון בסיסי', ['add', 'sub', 'mul', 'div', 'make']], ['🔢 מספרים', ['dig', 'mul10', 'seq', 'even', 'place', 'round', 'oo', 'negOne', 'negTwo']], ['🍕 שברים ועשרוניים', ['frCmp', 'frRed', 'frMix', 'decFr', 'decShift']],
     ['📖 משפחות מילים', ['words', 'wFrac', 'wAngle', 'wTri', 'wQuad', 'wPar']]];
   var RECENT = [], LASTANS = null, LASTQ = null;
   function makeQ(topics, lv) {
