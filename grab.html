@@ -131,7 +131,10 @@ body.duo .q .pic { height: min(18vh, 170px) }
 #pz .row button, .mus { font: inherit; font-weight: 800; font-size: 17px; color: #fff; background: rgba(255,255,255,.1); border: 2px solid rgba(255,255,255,.18); border-radius: 999px; padding: 9px 18px; cursor: pointer }
 .mus[aria-pressed="true"] { background: rgba(57,217,138,.22); border-color: var(--good) }
 .musRow { display: flex; flex-direction: column; align-items: center; gap: 6px } .musRow > b { font-size: 16px; font-weight: 900 } .musRow > div { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center } .musRow .mus { font-size: 15px; padding: 7px 14px }
-@media (max-height: 620px) { #pz { gap: 8px; padding: 10px } #pz .big { font-size: 54px } #pz h1 { font-size: 32px } #pz p { font-size: 16px } #pz .go { font-size: 22px; padding: 10px 30px } }
+/* 31.10 (אבירם: "צפוף מדי"): ריווח בין החלקים של מסך העצירה */
+#pz { gap: 30px; padding: 28px 16px } #pz h1 { margin-top: -10px } #pz p { margin: -14px 0 0; max-width: 520px; line-height: 1.5 } #pz .go { margin-top: 6px } #pz .row { gap: 14px } #pz .row button { padding: 11px 22px }
+#pz .musRow { gap: 12px; margin-top: 8px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.15) } #pz .musRow > div { gap: 10px }
+@media (max-height: 620px) { #pz { gap: 18px; padding: 16px } #pz .big { font-size: 54px } #pz h1 { font-size: 32px } #pz p { font-size: 16px } #pz .go { font-size: 22px; padding: 10px 30px } }
 /* 30.10 💡 איך פותרים: כפתור מתחת לתרגיל, הסבר על כל השולחן, הילד פותר בלי לחץ (הרובוט מחכה) */
 #howBtn { font: inherit; font-weight: 800; font-size: clamp(14px, 2.4vh, 18px); color: #1b2440; background: #fff3c4; border: 2px solid var(--kid); border-radius: 999px; padding: 4px 14px; cursor: pointer; margin-top: 4px }
 #howBtn[hidden] { display: none }
