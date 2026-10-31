@@ -21,6 +21,7 @@ button { font: inherit; cursor: pointer }
 .top .r { display: flex; gap: 6px; align-items: center }
 .ib { font-size: 19px; background: rgba(255,255,255,.08); border: 0; color: #fff; border-radius: 12px; padding: 6px 10px; font-weight: 800 }
 .ib[hidden] { display: none }
+#mute { font-size: 16px; padding: 7px 12px } #mute.off { background: var(--bad) }
 .back { font-size: 16px; padding: 8px 14px }
 .streak { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; color: var(--muted) }
 .streak .bar { width: 110px; height: 10px; border-radius: 99px; background: rgba(0,0,0,.35); overflow: hidden }
@@ -177,7 +178,7 @@ button { font: inherit; cursor: pointer }
   var LS = { get: function (k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
              set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var st = { n: Math.min(5, Math.max(1, Number(CFG.n) || 1, Number(LS.get('war-n', 1)) || 1)), mute: LS.get('war-mute', false), pad: LS.get('war-pad', false) || !SR,
+  var st = { n: Math.min(5, Math.max(1, Number(CFG.n) || 1, Number(LS.get('war-n', 1)) || 1)), mute: false, pad: LS.get('war-pad', false) || !SR,
              deckK: [], deckB: [], pk: 0, pb: 0, streak: 0, round: 0, lastErr: -9, busy: false, misses: 0, correct: 0, total: 0, caught: 0 };
   var GOAL = 10, DECK = 13;
   var T = { say: { m: 'תגיד בקול', f: 'תגידי בקול', n: 'אומרים בקול' }, you: { m: 'ניצחת', f: 'ניצחת', n: 'ניצחון' } };
@@ -275,7 +276,7 @@ button { font: inherit; cursor: pointer }
   function hud() {
     $('dK').textContent = st.deckK.length; $('dB').textContent = st.deckB.length; $('pK').textContent = st.pk; $('pB').textContent = st.pb;
     $('plus').textContent = '+' + st.n; $('lvl').textContent = 'ועוד ' + st.n; $('stTx').textContent = Math.min(st.streak, GOAL) + '/' + GOAL; $('stBar').style.width = (100 * Math.min(st.streak, GOAL) / GOAL) + '%';
-    $('mute').textContent = st.mute ? '🔇' : '🔊'; $('padT').textContent = st.pad ? '🎤' : '🔢'; $('padT').title = st.pad ? 'לענות בקול' : 'לענות בכפתורים'; $('padT').hidden = !SR;
+    $('mute').textContent = st.mute ? '🔇 בלי קול' : '🔊 קול פועל'; $('mute').classList.toggle('off', st.mute); $('padT').textContent = st.pad ? '🎤' : '🔢'; $('padT').title = st.pad ? 'לענות בקול' : 'לענות בכפתורים'; $('padT').hidden = !SR;
   }
   function toast(t, c) { var e = document.createElement('div'); e.className = 'toast'; e.textContent = t; e.style.color = c || '#fff'; $('tb').appendChild(e); setTimeout(function () { e.remove(); }, 1300); }
   function glee(seat) { var s = $(seat); s.classList.remove('glee'); void s.offsetWidth; s.classList.add('glee'); }
@@ -367,10 +368,15 @@ button { font: inherit; cursor: pointer }
   if (CFG.close) { $('back').hidden = false; $('back').onclick = closeMe; }
   $('go').onclick = async function () {
     $('start').hidden = true; hud();
-    if (SR && !st.pad && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) { try { var s = await navigator.mediaDevices.getUserMedia({ audio: true }); s.getTracks().forEach(function (t) { t.stop(); }); } catch (e) { st.pad = true; hud(); } }
-    await speak(['intro']); begin();
+    var mic = Promise.resolve();
+    if (SR && !st.pad && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      var asked = setTimeout(function () { $('hear').textContent = '🎤 צריך לאשר את המיקרופון בחלונית שלמעלה, כדי שהרובוט ישמע'; }, 1500);
+      mic = navigator.mediaDevices.getUserMedia({ audio: true }).then(function (s) { s.getTracks().forEach(function (t) { t.stop(); }); }, function () { st.pad = true; hud(); })
+        .then(function () { clearTimeout(asked); $('hear').textContent = ''; });
+    }
+    await Promise.all([speak(['intro']), mic]); begin();
   };
-  $('mute').onclick = function () { st.mute = !st.mute; LS.set('war-mute', st.mute); if (st.mute) { qid++; try { AU.pause(); } catch (e) {} } hud(); };
+  $('mute').onclick = function () { st.mute = !st.mute; if (st.mute) { qid++; try { AU.pause(); } catch (e) {} } hud(); };
   $('padT').onclick = function () { st.pad = !st.pad; LS.set('war-pad', st.pad); hud(); if (st.pad) { stopRec(); } else hidePad(); if (REC === null && padRes && !st.pad) { var f = padRes; padRes = null; hidePad(); f(null); } };
   addEventListener('keydown', function (e) { if (e.key === 'Escape' && CFG.close) closeMe(); if (/^[0-9]$/.test(e.key) && padRes) { var f = padRes; padRes = null; f(e.key === '0' ? 10 : +e.key); } });
   hud();
