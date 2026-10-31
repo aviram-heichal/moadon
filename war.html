@@ -215,13 +215,24 @@ button { font: inherit; cursor: pointer }
     if (L.length >= 3 && L[0] === a && L[1] === b) return L[2];
     return L[L.length - 1]; }
   var REC = null, endListen = null;
+  // 🎤 31.10 (אבירם: "שלא תהיה בעיה כשצריך לפתוח מיקרופון"): ילד שיצא מהמסך (לשונית אחרת, מזעור, סגירה) = המיקרופון נסגר מיד והמשחק מחכה.
+  // מיקרופון שנשאר פתוח מעביר אוזניות בלוטות' ומכשירי שמיעה למצב "דיבורית" והסאונד של כל המחשב נעלם. כשחוזרים: ממשיכים מאותה נקודה.
+  var HID = document.hidden, visW = [], MICS = [];
+  function waitVis() { return HID ? new Promise(function (r) { visW.push(r); }) : Promise.resolve(); }
+  function micHide() { MICS.slice().forEach(function (m) { m.hide(); }); $('mic').hidden = true; }
+  document.addEventListener('visibilitychange', function () {
+    HID = document.hidden;
+    if (HID) micHide(); else { MICS.slice().forEach(function (m) { m.show(); }); var w = visW; visW = []; w.forEach(function (f) { f(); }); }
+  });
+  addEventListener('pagehide', function () { HID = true; micHide(); });
   function stopRec() { if (REC) { try { REC.onresult = REC.onend = REC.onerror = null; REC.abort(); } catch (e) {} REC = null; } $('mic').hidden = true; }
   // מחכה לתשובה בקול. מחזיר מספר, או null אם לא נשמע (8 שניות)
   function listen(a, b) {
-    return new Promise(function (res) {
+    return waitVis().then(function () { return new Promise(function (res) {
       if (!SR || st.pad) return res(null);
-      var r, got = null, over = false, t0;
-      function end(v) { if (over) return; over = true; endListen = null; clearTimeout(t0); stopRec(); res(v); }
+      var r, got = null, over = false, t0, M;
+      function end(v) { if (over) return; over = true; endListen = null; clearTimeout(t0); MICS = MICS.filter(function (x) { return x !== M; }); stopRec(); res(v); }
+      function startR() { if (over || HID) return; try { r.start(); $('mic').hidden = false; } catch (x) { setTimeout(function () { if (!over && !HID) try { r.start(); $('mic').hidden = false; } catch (y) { end(null); } }, 400); } }
       endListen = end;
       try { r = new SR(); } catch (e) { st.pad = true; return res(null); }
       REC = r; r.lang = 'he-IL'; r.interimResults = true; r.continuous = true; r.maxAlternatives = 4;
@@ -234,22 +245,26 @@ button { font: inherit; cursor: pointer }
         if (v != null) { got = v; if (fin) end(v); else { clearTimeout(t0); t0 = setTimeout(function () { end(got); }, 900); } }
       };
       r.onerror = function (e) { if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') { st.pad = true; showPad(); } end(got); };
-      r.onend = function () { if (!over) { if (got != null) return end(got); try { r.start(); } catch (x) { end(null); } } };
+      r.onend = function () { if (!over) { if (got != null) return end(got); startR(); } };
       try { r.start(); } catch (e) { return end(null); }
       $('mic').hidden = false; $('micTx').textContent = T.say[G];
       t0 = setTimeout(function () { end(got); }, 8000);
-    });
+      M = { hide: function () { clearTimeout(t0); try { r.abort(); } catch (e) {} }, show: function () { clearTimeout(t0); t0 = setTimeout(function () { end(got); }, 8000); startR(); } };
+      MICS.push(M);
+    }); });
   }
   // אחרי כל משפט של הרובוט: "🚨 טעית!" / "👍 נכון" (כפתור או בקול), 4.5 שניות. מחזיר true=טעית, false=נכון/שתק
   function catchWin() {
     return new Promise(function (res) {
-      var over = false, t0, r = null;
-      function end(v) { if (over) return; over = true; clearTimeout(t0); $('judge').hidden = true; $('catch').onclick = $('okb').onclick = null; if (r) { try { r.onresult = r.onend = r.onerror = null; r.abort(); } catch (e) {} } res(v); }
+      var over = false, t0, r = null, M;
+      function end(v) { if (over) return; over = true; clearTimeout(t0); MICS = MICS.filter(function (x) { return x !== M; }); $('judge').hidden = true; $('catch').onclick = $('okb').onclick = null; if (r) { try { r.onresult = r.onend = r.onerror = null; r.abort(); } catch (e) {} } res(v); }
       $('judge').hidden = false; $('catch').onclick = function () { end(true); }; $('okb').onclick = function () { end(false); };
       if (SR && !st.pad) { try { r = new SR(); r.lang = 'he-IL'; r.interimResults = true; r.continuous = true;
         r.onresult = function (e) { for (var i = e.resultIndex; i < e.results.length; i++) { var tx = e.results[i][0].transcript; if (/טעי|טעות|לא נכון|שקר/.test(tx)) return end(true); if (/נכון|צודק|צדק|כן/.test(tx)) return end(false); } };
-        r.onerror = function () {}; r.onend = function () { if (!over) try { r.start(); } catch (x) {} }; r.start(); } catch (e) { r = null; } }
+        r.onerror = function () {}; r.onend = function () { if (!over && !HID) try { r.start(); } catch (x) {} }; if (!HID) r.start(); } catch (e) { r = null; } }
       t0 = setTimeout(function () { end(false); }, 4500);
+      M = { hide: function () { clearTimeout(t0); if (r) try { r.abort(); } catch (e) {} }, show: function () { clearTimeout(t0); t0 = setTimeout(function () { end(false); }, 4500); if (r && !over) try { r.start(); } catch (e) {} } };
+      MICS.push(M); if (HID) M.hide();
     });
   }
   // כפתורי מספרים (אין מיקרופון / לא הבין פעמיים / הילד בחר 🔢)
@@ -355,7 +370,7 @@ button { font: inherit; cursor: pointer }
     speak([win || tie ? 'endk' : 'endr']); if (win) confetti(200);
     try { (window.opener || window.parent).postMessage({ war: 'end', k: st.pk, b: st.pb, n: st.n, ok: st.correct, all: st.total }, '*'); } catch (x) {}
   }
-  function closeMe() { stopRec(); try { if (window.opener) { window.close(); return; } } catch (e) {} try { window.parent.postMessage({ grab: 'close' }, '*'); } catch (e) {} }
+  function closeMe() { micHide(); stopRec(); try { if (window.opener) { window.close(); return; } } catch (e) {} try { window.parent.postMessage({ grab: 'close' }, '*'); } catch (e) {} }
   function begin() { st.deckK = deal(DECK); st.deckB = deal(DECK); st.pk = st.pb = 0; st.round = 0; st.lastErr = -9; st.correct = st.total = st.caught = 0; hud(); play1(); }
 
   // ---- מסך פתיחה ----
