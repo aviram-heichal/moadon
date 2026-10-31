@@ -288,7 +288,7 @@ button { font: inherit; cursor: pointer }
     var f = 0; (function step() { x.clearRect(0, 0, cv.width, cv.height); P.forEach(function (p) { p.x += p.vx; p.y += p.vy; p.vy += .5; x.fillStyle = p.c; x.fillRect(p.x, p.y, p.s, p.s * .6); }); if (++f < 70) setTimeout(step, 16); else x.clearRect(0, 0, cv.width, cv.height); })(); }
 
   // ---- סיבוב ----
-  function waitTap() { return new Promise(function (res) { var d = $('dKbtn'); d.classList.add('tap'); d.onclick = function () { d.onclick = null; d.classList.remove('tap'); res(); }; }); }
+  function waitTap() { return new Promise(function (res) { var d = $('dKbtn'); d.classList.add('tap'); if (!$('hear').textContent) $('hear').textContent = '👆 לוחצים על החפיסה שלך כדי להפוך קלף'; d.onclick = function () { d.onclick = null; d.classList.remove('tap'); res(); }; }); }
   async function play1() {
     var pot = 0, war = false;
     $('zK').innerHTML = ''; $('zB').innerHTML = ''; $('pot').textContent = $('pot2').textContent = '';
