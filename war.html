@@ -173,12 +173,18 @@ button { font: inherit; cursor: pointer }
 (function () {
   'use strict';
   var CFG = window.GAME_CFG || {}, V = window.WAR_VOICES || {};
+  // 1.11: פתיחה מקישור (למשל מהאפליקציה שמלמדת חשבון): war.html?n=1&stay=1&back=<כתובת באתר>
+  (function () { if (window.GAME_CFG) return; var Q; try { Q = new URLSearchParams(location.search); } catch (e) { return; }
+    var qn = Number(Q.get('n')); if (qn >= 1 && qn <= 5) { CFG.n = qn; CFG.fixN = true; }
+    if (Q.get('stay') === '1') CFG.stay = true;
+    var bk = Q.get('back') || ''; if (/^https:\/\/aviram-heichal\.github\.io\//.test(bk)) { CFG.close = true; CFG.backUrl = bk; }
+    if (Q.get('g') === 'f' || Q.get('g') === 'm') CFG.g = Q.get('g'); if (Q.get('who')) CFG.who = Q.get('who'); })();
   var G = CFG.g === 'f' ? 'f' : CFG.g === 'm' ? 'm' : 'n';
   var $ = function (id) { return document.getElementById(id); };
   var LS = { get: function (k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
              set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var st = { n: Math.min(5, Math.max(1, Number(CFG.n) || 1, Number(LS.get('war-n', 1)) || 1)), mute: false, pad: LS.get('war-pad', false) || !SR,
+  var st = { n: CFG.fixN ? CFG.n : Math.min(5, Math.max(1, Number(CFG.n) || 1, Number(LS.get('war-n', 1)) || 1)), mute: false, pad: LS.get('war-pad', false) || !SR,
              deckK: [], deckB: [], pk: 0, pb: 0, streak: 0, round: 0, lastErr: -9, busy: false, misses: 0, correct: 0, total: 0, caught: 0 };
   var GOAL = 10, DECK = 13;
   var T = { say: { m: 'תגיד בקול', f: 'תגידי בקול', n: 'אומרים בקול' }, you: { m: 'ניצחת', f: 'ניצחת', n: 'ניצחון' } };
@@ -353,7 +359,7 @@ button { font: inherit; cursor: pointer }
   }
   // 10 נכונות ברצף -> עולים לועוד N+1 (עד 5). הקלפים שנשארו מחולקים מחדש לטווח החדש
   async function levelCheck() {
-    if (st.streak >= GOAL && st.n < 5) {
+    if (st.streak >= GOAL && st.n < 5 && !CFG.stay) {
       st.n++; st.streak = 0; LS.set('war-n', st.n); st.deckK = deal(st.deckK.length); st.deckB = deal(st.deckB.length); hud();
       $('plus').classList.remove('up'); void $('plus').offsetWidth; $('plus').classList.add('up'); confetti(160); toast('⬆️ עולים שלב! ועוד ' + st.n, 'var(--kid)');
       await speak(['level', 'now', 'opA', 'n' + st.n]);
@@ -370,7 +376,7 @@ button { font: inherit; cursor: pointer }
     speak([win || tie ? 'endk' : 'endr']); if (win) confetti(200);
     try { (window.opener || window.parent).postMessage({ war: 'end', k: st.pk, b: st.pb, n: st.n, ok: st.correct, all: st.total }, '*'); } catch (x) {}
   }
-  function closeMe() { micHide(); stopRec(); try { if (window.opener) { window.close(); return; } } catch (e) {} try { window.parent.postMessage({ grab: 'close' }, '*'); } catch (e) {} }
+  function closeMe() { micHide(); stopRec(); try { if (window.opener) { window.close(); return; } } catch (e) {} if (CFG.backUrl && window.parent === window) { location.href = CFG.backUrl; return; } try { window.parent.postMessage({ grab: 'close' }, '*'); } catch (e) {} }
   function begin() { st.deckK = deal(DECK); st.deckB = deal(DECK); st.pk = st.pb = 0; st.round = 0; st.lastErr = -9; st.correct = st.total = st.caught = 0; hud(); play1(); }
 
   // ---- מסך פתיחה ----
