@@ -146,7 +146,7 @@ button { font: inherit; cursor: pointer }
       </div>
     </div>
     <div class="ctl">
-      <div class="hear" id="hear"></div>
+      <div class="hear" id="hear"></div><div class="hear" id="mhint" style="color:var(--kid);min-height:0"></div>
       <div class="mic" id="mic" hidden><span class="dot">🎤</span><span id="micTx">אומרים בקול</span></div>
       <div class="judge" id="judge" hidden><button class="catch" id="catch">🚨 טעית!</button><button class="okb" id="okb">👍 נכון</button></div>
       <div class="pad" id="pad" hidden></div>
@@ -214,14 +214,15 @@ button { font: inherit; cursor: pointer }
     if (L[0] === a && (L.length === 1 || (L.length === 2 && L[1] === b))) return null; // עוד לא אמר את התשובה
     if (L.length >= 3 && L[0] === a && L[1] === b) return L[2];
     return L[L.length - 1]; }
-  var REC = null;
+  var REC = null, endListen = null;
   function stopRec() { if (REC) { try { REC.onresult = REC.onend = REC.onerror = null; REC.abort(); } catch (e) {} REC = null; } $('mic').hidden = true; }
   // מחכה לתשובה בקול. מחזיר מספר, או null אם לא נשמע (8 שניות)
   function listen(a, b) {
     return new Promise(function (res) {
       if (!SR || st.pad) return res(null);
       var r, got = null, over = false, t0;
-      function end(v) { if (over) return; over = true; clearTimeout(t0); stopRec(); res(v); }
+      function end(v) { if (over) return; over = true; endListen = null; clearTimeout(t0); stopRec(); res(v); }
+      endListen = end;
       try { r = new SR(); } catch (e) { st.pad = true; return res(null); }
       REC = r; r.lang = 'he-IL'; r.interimResults = true; r.continuous = true; r.maxAlternatives = 4;
       r.onresult = function (e) {
@@ -368,16 +369,22 @@ button { font: inherit; cursor: pointer }
   if (CFG.close) { $('back').hidden = false; $('back').onclick = closeMe; }
   $('go').onclick = async function () {
     $('start').hidden = true; hud();
-    var mic = Promise.resolve();
+    // 31.10 (אבירם: "לא קפץ אישור מיקרופון וגם לא מתחיל"): כרום לפעמים לא מציג את החלונית (רק סמל בשורת הכתובת) והבקשה נתקעת.
+    // לכן לא מחכים: אחרי ההסבר המשחק מתחיל. אין אישור עדיין = כפתורי מספרים, וכשמאשרים עוברים לדיבור לבד
+    var micOk = null;
     if (SR && !st.pad && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      var asked = setTimeout(function () { $('hear').textContent = '🎤 צריך לאשר את המיקרופון בחלונית שלמעלה, כדי שהרובוט ישמע'; }, 1500);
-      mic = navigator.mediaDevices.getUserMedia({ audio: true }).then(function (s) { s.getTracks().forEach(function (t) { t.stop(); }); }, function () { st.pad = true; hud(); })
-        .then(function () { clearTimeout(asked); $('hear').textContent = ''; });
+      st.pad = true; hud();
+      try {
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(function (s) { s.getTracks().forEach(function (t) { t.stop(); }); micOk = true; if (!LS.get('war-pad', false)) { st.pad = false; var f = padRes; hidePad(); if (f) f(null); } hud(); $('mhint').textContent = '🎤 המיקרופון מוכן! אפשר לענות בקול'; setTimeout(function () { $('mhint').textContent = ''; }, 4000); },
+          function () { micOk = false; hud(); $('mhint').textContent = 'אין אישור למיקרופון, אז עונים בכפתורים 👇'; });
+      } catch (e) { micOk = false; }
     }
-    await Promise.all([speak(['intro']), mic]); begin();
+    await speak(['intro']);
+    if (micOk === null && SR && !LS.get('war-pad', false)) $('mhint').textContent = '🎤 כדי לדבר: לאשר מיקרופון (הסמל בשורת הכתובת למעלה). בינתיים עונים בכפתורים';
+    begin();
   };
   $('mute').onclick = function () { st.mute = !st.mute; if (st.mute) { qid++; try { AU.pause(); } catch (e) {} } hud(); };
-  $('padT').onclick = function () { st.pad = !st.pad; LS.set('war-pad', st.pad); hud(); if (st.pad) { stopRec(); } else hidePad(); if (REC === null && padRes && !st.pad) { var f = padRes; padRes = null; hidePad(); f(null); } };
+  $('padT').onclick = function () { st.pad = !st.pad; LS.set('war-pad', st.pad); hud(); if (st.pad) { if (endListen) endListen(null); } else { var f = padRes; hidePad(); if (f) f(null); } };
   addEventListener('keydown', function (e) { if (e.key === 'Escape' && CFG.close) closeMe(); if (/^[0-9]$/.test(e.key) && padRes) { var f = padRes; padRes = null; f(e.key === '0' ? 10 : +e.key); } });
   hud();
   window.__war = { st: st, nums: nums, answerOf: answerOf, deal: deal, finish: finish };
