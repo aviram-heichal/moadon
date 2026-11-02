@@ -243,7 +243,7 @@ body.duo .q .pic { height: min(18vh, 170px) }
   // מהירות (אבירם 26.10: "כל פעם צריך שיהיה מהיר יותר"): כל תרגיל הרובוט מהיר ב-6%. ניצחת במשחק? המשחק הבא מתחיל מהר יותר (נשמר)
   var ROUNDS = 10;
   // זמן בסיס (שניות) לילד ממוצע שיודע את החומר, לפי נושא ורמה [קל, רגיל, מאתגר]. תרגיל שצריך לחשב = יותר זמן
-  var BASE = { wTri: [8, 10, 12], add: [4, 6, 11], sub: [5, 7, 12], mul: [5, 6, 8], div: [6, 7, 9], words: [8, 10, 13], make: [5, 8, 11], mul10: [7, 8, 10], seq: [7, 9, 12],
+  var BASE = { rtSimp: [8, 10, 13], rtMiss: [8, 10, 13], rtWord: [14, 17, 21], wTri: [8, 10, 12], add: [4, 6, 11], sub: [5, 7, 12], mul: [5, 6, 8], div: [6, 7, 9], words: [8, 10, 13], make: [5, 8, 11], mul10: [7, 8, 10], seq: [7, 9, 12],
     even: [4, 5, 6], dig: [5, 6, 8], place: [6, 7, 9], oo: [12, 15, 20], terms: [6, 7, 8], frCmp: [8, 10, 13], frRed: [9, 12, 15], frMix: [11, 14, 17], decFr: [8, 10, 13], decShift: [7, 8, 10] };
   var R0 = 1.3; // ילד חדש: קודם נותנים יותר זמן, ואז לומדים את הקצב שלו
   var FLOW_MIN = .75, FLOW_MAX = 1.5;
@@ -371,6 +371,26 @@ body.duo .q .pic { height: min(18vh, 170px) }
     // הטעויות של ילדים: לכיוון השני, למקום אחר, קפיצה אחת יותר/פחות
     var w = [c === dn ? dn + p : dn, RND(n, p * 10), p > 10 ? RND(n, p / 10) : c + 2 * p, c + p, c - p, dn + 2 * p].filter(function (x) { return x > 0 && x !== c; });
     return numQ(wd('כמה זה <span class="ex-in">' + fmt(n) + '</span><br>בעיגול ' + TO[p] + '?'), c, w, p);
+  } };
+  // ⚖️ יחס (2.11). תשובות = מחרוזות. יחס תמיד משמאל לימין. שום תשובה שגויה לא שווה בערכה לנכונה
+  var RX = function (a, b) { return '<span class="ex-in">' + a + ' : ' + b + '</span>'; };
+  function rtPair(hi) { for (;;) { var a = R(1, hi), b = R(1, hi); if (a !== b && gcd(a, b) === 1) return [a, b]; } }
+  T.rtSimp = { name: '⚖️ צמצום יחס', g: 2, q: function (lv) {
+    var p = rtPair(lv === 1 ? 6 : lv === 2 ? 9 : 12), a = p[0], b = p[1], k = lv === 1 ? R(2, 5) : lv === 2 ? R(2, 12) : R(6, 25), A = a * k, B = b * k, c = RX(a, b), seen = {}, w = [];
+    [[b, a], [a + 1, b], [a, b + 1], [a + 1, b + 1], [A - k + 1, B - k + 1], [A - 1, B - 1], [a + 2, b + 1]].forEach(function (x) { if (x[0] > 0 && x[1] > 0 && x[0] * b !== x[1] * a && !seen[x]) { seen[x] = 1; w.push(RX(x[0], x[1])); } });
+    return { show: '<div class="ex">' + RX(A, B) + '</div><div class="wd">מה היחס המצומצם?</div>', ans: c, opts: w.sort(function () { return Math.random() - .5; }).slice(0, 3) };
+  } };
+  T.rtMiss = { name: '⚖️ המספר החסר ביחס', g: 2, q: function (lv) {
+    var p = rtPair(lv === 1 ? 7 : lv === 2 ? 9 : 12), a = p[0], b = p[1], k = lv === 1 ? R(2, 6) : R(2, 9), m, A, B, C, D, ok = lv < 3;
+    if (lv < 3) { A = a; B = b; C = a * k; D = b * k; } else { do { m = R(2, 9); k = R(2, 9); } while (m === k || m % k === 0 || k % m === 0); A = a * m; B = b * m; C = a * k; D = b * k; }
+    return numQ('<div class="ex">' + A + ' : ' + B + ' = ' + C + ' : ?</div>', D, [B + (C - A), C + B, D + b, D - b, D + 1, A * D], 5);
+  } };
+  T.rtWord = { name: '⚖️ בעיות יחס', g: 2, q: function (lv) {
+    var kind = bag('rtw', ['a1', 'b2', 'c3']), p = rtPair(lv === 1 ? 5 : lv === 2 ? 7 : 9), a = p[0] || 1, b = p[1], k = R(2, lv === 1 ? 6 : lv === 2 ? 9 : 15), C = [['בנים', 'בנות'], ['תפוחים', 'אגסים'], ['עפרונות', 'עטים'], ['כלבים', 'חתולים']][R(0, 3)];
+    if (kind === 'a1') return numQ(wd('היחס בין ' + C[0] + ' ל' + C[1] + ' הוא ' + RX(a, b) + '.<br>יש ' + a * k + ' ' + C[0] + '. כמה ' + C[1] + '?'), b * k, [b + (a * k - a), a * k + b, (a + b) * k, b * k + k, b * k - k], 6);
+    if (kind === 'b2') { var t = (a + b) * k; return numQ(wd('חלקו ' + fmt(t) + ' ביחס ' + RX(a, b) + '.<br>כמה מקבל החלק הראשון?'), a * k, [b * k, Math.floor(t / 2), k, t - a, a * k + k], 6); }
+    var m = R(2, 6), u = R(2, lv === 1 ? 9 : 15), n; do { n = R(2, 9); } while (n === m);
+    return numQ(wd(m + ' מחברות עולות ' + m * u + ' שקלים.<br>כמה עולות ' + n + ' מחברות?'), n * u, [m * u + (n - m), m * u, n * u + u, n * u - u, u], 6);
   } };
   T.oo = { name: '🧩 סדר פעולות', g: 2, q: function (lv) {
     for (var g = 0; g < 200; g++) {
@@ -641,6 +661,7 @@ body.duo .q .pic { height: min(18vh, 170px) }
       return negQ(a + ' ' + (plus ? '+' : '-') + ' ' + NP(b), v, a, plus ? b : -b); }
   } };
   var GROUPS = [['➕ חשבון בסיסי', ['add', 'sub', 'mul', 'div', 'make']], ['🔢 מספרים', ['dig', 'mul10', 'seq', 'even', 'place', 'round', 'oo', 'negOne', 'negTwo']], ['🍕 שברים ועשרוניים', ['frCmp', 'frRed', 'frMix', 'decFr', 'decShift']],
+    ['⚖️ יחס', ['rtSimp', 'rtMiss', 'rtWord']],
     ['📖 משפחות מילים', ['words', 'wFrac', 'wAngle', 'wTri', 'wQuad', 'wPar']]];
   var RECENT = [], LASTANS = null, LASTQ = null;
   function makeQ(topics, lv) {
