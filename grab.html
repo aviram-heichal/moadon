@@ -675,6 +675,8 @@ body.duo .q .pic { height: min(18vh, 170px) }
   var GROUPS = [['➕ חשבון בסיסי', ['add', 'sub', 'mul', 'div', 'make']], ['🔢 מספרים', ['dig', 'mul10', 'seq', 'even', 'place', 'round', 'oo', 'negOne', 'negTwo']], ['🍕 שברים ועשרוניים', ['frCmp', 'frRed', 'frMix', 'decFr', 'decShift']],
     ['⚖️ יחס', ['rtRead', 'rtSame', 'rtSimp', 'rtMiss', 'rtWord']],
     ['📖 משפחות מילים', ['words', 'wFrac', 'wAngle', 'wTri', 'wQuad', 'wPar']]];
+  // 3.11: דף המורים (robot.html): יחס עדיין לא אושר, ונשאר רק אצל הבודקים
+  if (CFG.noRatio) GROUPS = GROUPS.filter(function (g) { return g[1].indexOf('rtRead') < 0; });
   var RECENT = [], LASTANS = null, LASTQ = null;
   function makeQ(topics, lv) {
     for (var g = 0; g < 50; g++) {
@@ -821,8 +823,10 @@ body.duo .q .pic { height: min(18vh, 170px) }
   $('lv').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(Number(x.dataset.l) === st.lv)); });
   if (CFG.close) {
     var bye = function () { tell({ grab: 'close' }); if (window.parent === window && window.opener) window.close(); };
+    // 3.11: דף המורים נפתח בלשונית או מקישור שהודבק: מנסים לסגור, ואם הדפדפן לא נותן חוזרים לדשבורד
+    if (CFG.exitUrl) { bye = function () { try { window.close(); } catch (e) {} setTimeout(function () { location.href = CFG.exitUrl; }, 250); }; $('close').textContent = '✕ יציאה'; }
     $('close').hidden = false; $('close').onclick = bye;
-    var x2 = document.createElement('button'); x2.className = 'mute'; x2.textContent = '✕'; x2.setAttribute('aria-label', 'סגירה');
+    var x2 = document.createElement('button'); x2.className = 'mute'; x2.textContent = CFG.exitUrl ? '✕ יציאה' : '✕'; x2.setAttribute('aria-label', 'סגירה');
     x2.style.cssText = 'position:absolute;top:12px;left:12px;font-size:22px'; x2.onclick = bye; $('start').appendChild(x2);
     addEventListener('keydown', function (e) { if (e.key === 'Escape' && !st.live) bye(); });
     $('pzX').hidden = false; $('pzX').onclick = bye;
