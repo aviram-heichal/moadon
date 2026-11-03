@@ -79,7 +79,7 @@ footer.f .ahchip { display: inline-block; background: #fff; border-radius: 14px;
 (function () {
   'use strict';
   var API = "https://script.google.com/macros/s/AKfycbx9VEANkpfuMCsm3b2cQ2Y2oO7zpYqWBzh0WGQCb6dGzxj4eoNbY8PcjLfmzz9ZX1y_eg/exec";            // כתובת החלק שבענן (Apps Script)
-  var BIN = "g-e01e7e048d.bin";            // המחולל המוצפן
+  var BIN = "g-8dea8ff246.bin";            // המחולל המוצפן
   var GOOGLE_ID = "";   // ריק = בלי כפתור גוגל
   var KEY_PARENT_H = 24, KEY_KID_D = 7;
 
@@ -185,12 +185,12 @@ footer.f .ahchip { display: inline-block; background: #fff; border-radius: 14px;
   }
   function revalidate() {
     post({ a: 'me', t: acct.t }).then(function (r) {
-      if (r.ok) { var a = store.get('club-acct') || acct; a.kt = r.kt; a.fam = r.fam || ''; a.devs = r.devs; a.devMax = r.devMax; store.set('club-acct', a); store.set('club-key', { k: r.key, at: Date.now() }); return; }
+      if (r.ok) { var a = store.get('club-acct') || acct; a.kt = r.kt; a.fam = r.fam || ''; a.devs = r.devs; a.devMax = r.devMax; a.teacher = !!r.teacher; store.set('club-acct', a); store.set('club-key', { k: r.key, at: Date.now() }); return; }
       if (closed(r)) { store.set('club-why', { why: r.why, join: r.join, email: acct.email }); signOut(); reload(); }
     }, function () {});
   }
   function keep(r, t) {
-    acct = { api: API, t: t, email: r.email, kids: r.kids || [], kt: r.kt, fam: r.fam || '', devs: r.devs, devMax: r.devMax };
+    acct = { api: API, t: t, email: r.email, kids: r.kids || [], kt: r.kt, fam: r.fam || '', devs: r.devs, devMax: r.devMax, teacher: !!r.teacher };
     store.set('club-acct', acct); store.set('club-key', { k: r.key, at: Date.now() });
   }
   function signOut() { store.del('club-acct'); store.del('club-key'); acct = null; }
