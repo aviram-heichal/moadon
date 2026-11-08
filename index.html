@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
+<link rel="apple-touch-icon" href="r/club-logo.png">
+<link rel="icon" href="r/club-logo.png">
 <title>מחולל האימונים · מועדון הדור הבא</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -57,6 +59,26 @@ input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid 
 .eye:hover { background: var(--line) }
 [hidden] { display: none !important }
 footer.f .ahchip { display: inline-block; background: #fff; border-radius: 14px; padding: 8px 14px; box-shadow: 0 4px 14px -8px rgba(12,21,48,.45); margin-bottom: 8px } footer.f .ahchip img { height: 46px; width: auto; display: block } footer.f .copy { display: block }
+/* 🏠 8.11 החדר של הילד + "מי מתאמן עכשיו?" */
+.room { gap: 16px; text-align: center }
+.rtop { display: flex; justify-content: space-between; align-items: center; gap: 8px }
+.rbtn { font: inherit; font-weight: 700; font-size: 16px; color: var(--ink); background: var(--surface); border: 2px solid var(--line); border-radius: 12px; padding: 7px 12px; cursor: pointer }
+.rbtn:hover { border-color: var(--gold) }
+.hello { font-family: var(--display); font-weight: 400; font-size: 34px; margin: 0; line-height: 1.15 }
+.rface { font-size: 72px; line-height: 1 }
+.rtoday { font-size: 20px; line-height: 1.5 }
+.rtoday b { font-family: var(--display); font-weight: 400; font-size: 24px }
+.road { display: flex; gap: 6px; justify-content: center; direction: rtl }
+.road span { flex: 1; max-width: 52px; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; font-family: var(--display); font-size: 18px; background: var(--surface); border: 3px solid var(--line); color: var(--muted) }
+.road .d { background: var(--ok); border-color: var(--ok); color: #fff }
+.road .t { background: var(--gold-btn); border-color: var(--gold-btn); color: #14203d; transform: scale(1.12) }
+.go.big { font-size: 24px; min-height: 64px; background: var(--ok); color: #fff }
+.rnote { color: var(--muted); font-size: 16px; margin: 0 }
+.who2 { display: grid; gap: 12px }
+.who2 button { font: inherit; display: flex; align-items: center; gap: 14px; font-weight: 800; font-size: 22px; color: var(--ink); background: var(--surface); border: 3px solid var(--line); border-radius: 18px; padding: 12px 16px; cursor: pointer; text-align: start }
+.who2 button:hover { border-color: var(--gold) }
+.who2 i { font-style: normal; font-size: 40px }
+.bye { font-size: 18px }
 </style>
 </head>
 <body>
@@ -79,7 +101,7 @@ footer.f .ahchip { display: inline-block; background: #fff; border-radius: 14px;
 (function () {
   'use strict';
   var API = "https://script.google.com/macros/s/AKfycbx9VEANkpfuMCsm3b2cQ2Y2oO7zpYqWBzh0WGQCb6dGzxj4eoNbY8PcjLfmzz9ZX1y_eg/exec";            // כתובת החלק שבענן (Apps Script)
-  var BIN = "g-0750fa066b.bin";            // המחולל המוצפן
+  var BIN = "g-298beed659.bin";            // המחולל המוצפן
   var GOOGLE_ID = "";   // ריק = בלי כפתור גוגל
   var KEY_PARENT_H = 24, KEY_KID_D = 7;
 
@@ -151,6 +173,73 @@ footer.f .ahchip { display: inline-block; background: #fff; border-radius: 14px;
   // ---------- מצב ילד: קישור מההורה ----------
   var kt = (location.hash.match(/[#&]t=([0-9a-f]{20,})/) || [])[1];
   var kidMode = /[#&]k=[\w-]+/.test(location.hash) && kt;
+  // ---------- 🏠 8.11 (אבירם): הקישור הקבוע של הילד (#r=<ילד>&t=) והקישור המשפחתי (#f=1&t=) ----------
+  // תמיד פותח את השבוע האחרון של הילד ביום של היום. שבוע חדש נכנס לבד. מכאן אין דרך למחולל (רק ההורה בונה שבוע)
+  var H = location.hash, roomKid = (H.match(/[#&]r=(\d{1,3})(?:&|$)/) || [])[1], famMode = /[#&]f=1(?:&|$)/.test(H);
+  var roomMode = !!kt && (roomKid !== undefined || famMode) && !/[#&]k=/.test(H);
+  function base() { return location.href.split('#')[0]; }
+  function face(k) { return k && k.gender === 'f' ? '👧' : k && k.gender === 'm' ? '👦' : '🙂'; }
+  function g3(k, m, f, n) { return k && k.gender === 'm' ? m : k && k.gender === 'f' ? f : n; }
+  function heroSay(h, p) { var e = document.querySelector('.hero h1'), q = document.querySelector('.hero p'); if (e) e.textContent = h; if (q) q.textContent = p; }
+  function room(key) {
+    loading('פותחים את החדר...');
+    var ask = { a: 'room', kt: kt }; if (roomKid !== undefined) ask.kid = Number(roomKid);
+    return post(ask).then(function (r) {
+      if (!r.ok && r.why === 'nokid' && r.kids && r.kids.length) { roomKid = undefined; famMode = true; return picker(key, r.kids); }
+      if (!r.ok) return kidFail(r);
+      if (roomKid === undefined) return picker(key, r.kids);
+      drawRoom(key, r.kid, r.cur, r.kids.length > 1);
+    }, function () { netRetry(function () { room(key); }); });
+  }
+  function picker(key, kids) {
+    document.title = 'מי מתאמן עכשיו? · מועדון הדור הבא';
+    heroSay('מי מתאמן עכשיו?', 'בוחרים את השם, ומתחילים 🚀');
+    card.className = 'card room';
+    if (!kids.length) { card.innerHTML = '<h2>עוד אין כאן ילדים 🙂</h2><p>בקשו מאמא או מאבא לבנות שבוע אימונים במחולל.</p>'; return; }
+    card.innerHTML = '<h2>מי מתאמן עכשיו? 👋</h2><div class="who2">' + kids.map(function (k) {
+      return '<button type="button" data-i="' + k.i + '"><i aria-hidden="true">' + face(k) + '</i>' + esc(k.name) + '</button>';
+    }).join('') + '</div>';
+    card.querySelector('.who2').onclick = function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      roomKid = b.dataset.i; famMode = true; history.replaceState(null, '', '#r=' + roomKid + '&f=1&t=' + kt); room(key);
+    };
+  }
+  function drawRoom(key, k, w, many) {
+    var nm = esc(k.name);
+    document.title = 'החדר של ' + k.name;
+    heroSay('החדר של ' + k.name, '5 דקות ביום, ' + g3(k, 'ואתה מתקדם', 'ואת מתקדמת', 'ומתקדמים') + ' 💪');
+    var top = '<div class="rtop">' + (famMode && many ? '<button type="button" class="rbtn" id="rSwap">→ החלפת ילד</button>' : '<span></span>') +
+      '<button type="button" class="rbtn" id="rExit">✕ יציאה</button></div>';
+    var h = top + '<p class="hello">היי ' + nm + '! 👋</p><div class="rface" aria-hidden="true">' + face(k) + '</div>';
+    if (!w) h += '<p class="rtoday">עוד אין שבוע אימונים.</p><p class="rnote">בקשו מאמא או מאבא לבנות שבוע במחולל.<br>הוא יופיע כאן לבד 🙂</p>';
+    else if (w.kind === 'diag') h += '<p class="rtoday"><b>משימת בדיקה קצרה 🩺</b><br>בלי ציונים. ' + g3(k, 'עונה', 'עונה', 'עונים') + ' על כמה שאלות, וזהו.</p><button type="button" class="go big" id="rGo">▶ יאללה, מתחילים!</button>';
+    else {
+      var day = Math.min(6, w.days + 1), road = '';
+      for (var i = 1; i <= 6; i++) road += '<span class="' + (i <= w.days ? 'd' : i === day && !w.done ? 't' : '') + '">' + (i <= w.days ? '✓' : i) + '</span>';
+      road = '<div class="road" aria-label="מפת השבוע">' + road + '</div>';
+      if (w.done) h += '<p class="rtoday"><b>' + g3(k, 'סיימת', 'סיימת', 'סיימתם') + ' את כל השבוע! 🎉</b><br>' + esc(w.topic) + '</p>' + road +
+        '<p class="rnote">משימה הושלמה ✔<br>השבוע הבא יופיע כאן לבד.</p><button type="button" class="go" id="rGo">לראות את השבוע שוב</button>';
+      else if (w.today) h += '<p class="rtoday"><b>כל הכבוד! היום כבר ' + g3(k, 'התאמנת', 'התאמנת', 'התאמנתם') + ' 💪</b><br>' + esc(w.topic) + '</p>' + road +
+        '<p class="rnote">יום ' + day + ' נפתח מחר.</p><button type="button" class="go" id="rGo">▶ לפתוח את השבוע</button>';
+      else h += '<p class="rtoday">היום <b>יום ' + day + '</b> מתוך 6<br>' + esc(w.topic) + ' · 5-10 דקות</p>' + road +
+        '<button type="button" class="go big" id="rGo">▶ יאללה, מתחילים!</button>' + (day < 6 ? '<p class="rnote">יום ' + (day + 1) + ' נפתח מחר.</p>' : '<p class="rnote">היום האחרון! יש בו אתגר 🏆</p>');
+    }
+    card.className = 'card room'; card.innerHTML = h;
+    var go = document.getElementById('rGo');
+    if (go) go.onclick = function () {
+      var hh = String(w.url).split('#')[1] || '';
+      if (!/(^|&)k=/.test(hh)) return kidFail({});
+      location.hash = hh + '&rm=' + k.i + (famMode ? '&fm=1' : '');
+      run(key).catch(kidFail);
+    };
+    document.getElementById('rExit').onclick = function () {
+      try { window.close(); } catch (e) {}
+      card.innerHTML = '<p class="hello">להתראות ' + nm + '! 👋</p><p class="bye">אפשר לסגור את החלון.</p><button type="button" class="rbtn" id="rBack">→ חזרה לחדר</button>';
+      document.getElementById('rBack').onclick = function () { room(key); };
+    };
+    var sw = document.getElementById('rSwap'); if (sw) sw.onclick = function () { roomKid = undefined; history.replaceState(null, '', '#f=1&t=' + kt); room(key); };
+  }
+  if (roomMode) kidMode = true;
   var acct = store.get('club-acct'), kc = store.get('club-key');
   // 🛡️ מזהה המכשיר (לקישור הילד: עד 2 מכשירים לכל ילד)
   var dev = store.get('club-dev');
@@ -159,11 +248,11 @@ footer.f .ahchip { display: inline-block; background: #fff; border-radius: 14px;
 
   function kidStart() {
     var fresh = kc && kc.kt === kt && Date.now() - kc.at < KEY_KID_D * 864e5;
-    if (fresh) { run(kc.k).catch(kidFail); post(kidAsk()).then(function (r) { if (!r.ok && (r.why === 'kid' || r.why === 'kiddev')) { store.del('club-key'); reload(); } }, function () {}); return; }
+    if (fresh) { (roomMode ? room(kc.k) : run(kc.k)).catch(kidFail); post(kidAsk()).then(function (r) { if (!r.ok && (r.why === 'kid' || r.why === 'kiddev')) { store.del('club-key'); reload(); } }, function () {}); return; }
     loading('פותחים את האימון...');
     post(kidAsk()).then(function (r) {
       if (!r.ok) return kidFail(r);
-      store.set('club-key', { k: r.key, at: Date.now(), kt: kt }); return run(r.key);
+      store.set('club-key', { k: r.key, at: Date.now(), kt: kt }); return roomMode ? room(r.key) : run(r.key);
     }).catch(kidFail);
   }
   function kidFail(r) {
