@@ -600,7 +600,7 @@ body.duo .q .pic { height: min(18vh, 170px) }
   // מהירות (אבירם 26.10: "כל פעם צריך שיהיה מהיר יותר"): כל תרגיל הרובוט מהיר ב-6%. ניצחת במשחק? המשחק הבא מתחיל מהר יותר (נשמר)
   var ROUNDS = 10;
   // זמן בסיס (שניות) לילד ממוצע שיודע את החומר, לפי נושא ורמה [קל, רגיל, מאתגר]. תרגיל שצריך לחשב = יותר זמן
-  var BASE = { rtRead: [7, 8, 10], rtSame: [8, 9, 11], rtSimp: [8, 10, 13], rtMiss: [8, 10, 13], rtWord: [14, 17, 21], wTri: [8, 10, 12], add: [4, 6, 11], sub: [5, 7, 12], mul: [5, 6, 8], div: [6, 7, 9], words: [8, 10, 13], make: [5, 8, 11], mul10: [7, 8, 10], seq: [7, 9, 12],
+  var BASE = { pcMean: [8, 9, 11], pcOne: [7, 8, 10], pcOf: [10, 13, 17], pcConv: [8, 10, 13], pcWhat: [11, 14, 18], pcWord: [15, 18, 22], rtRead: [7, 8, 10], rtSame: [8, 9, 11], rtSimp: [8, 10, 13], rtMiss: [8, 10, 13], rtWord: [14, 17, 21], wTri: [8, 10, 12], add: [4, 6, 11], sub: [5, 7, 12], mul: [5, 6, 8], div: [6, 7, 9], words: [8, 10, 13], make: [5, 8, 11], mul10: [7, 8, 10], seq: [7, 9, 12],
     even: [4, 5, 6], dig: [5, 6, 8], place: [6, 7, 9], oo: [12, 15, 20], terms: [6, 7, 8], frCmp: [8, 10, 13], frRed: [9, 12, 15], frMix: [11, 14, 17], decFr: [8, 10, 13], decShift: [7, 8, 10] };
   var R0 = 1.3; // ילד חדש: קודם נותנים יותר זמן, ואז לומדים את הקצב שלו
   var FLOW_MIN = .75, FLOW_MAX = 1.5;
@@ -760,6 +760,44 @@ body.duo .q .pic { height: min(18vh, 170px) }
     if (kind === 'b2') { var t = (a + b) * k; return numQ(wd('חלקו ' + fmt(t) + ' ביחס ' + RX(a, b) + '.<br>כמה מקבל החלק הראשון?'), a * k, [b * k, Math.floor(t / 2), k, t - a, a * k + k], 6); }
     var m = R(2, 6), u = R(2, lv === 1 ? 9 : 15), n; do { n = R(2, 9); } while (n === m);
     return numQ(wd(m + ' מחברות עולות ' + m * u + ' שקלים.<br>כמה עולות ' + n + ' מחברות?'), n * u, [m * u + (n - m), m * u, n * u + u, n * u - u, u], 6);
+  } };
+  // 💯 אחוזים (3.11). אחוז הוא מאית. התשובות השגויות = הטעויות של ילדים: 0.5 = 5%, האחוז עצמו, אחוז אחד בלי לכפול
+  var PS = function (p) { return '<span class="ex-in">' + p + '%</span>'; };
+  function pcQ(show, c, cand) { var q = numQ(show, c, cand, 9); q.ans += '%'; q.opts = q.opts.map(function (x) { return x + '%'; }); return q; }
+  T.pcMean = { name: '💯 מה זה אחוז', g: 2, q: function (lv) {
+    var kind = bag('pcm', ['fr', 'rest', 'of']), n = lv === 1 ? 10 * R(1, 9) : R(1, 99);
+    if (kind === 'fr') return pcQ(wd('<span class="ex-in">' + FR(n, 100) + '</span> הם כמה אחוזים?'), n, [100 - n, n * 10, n + 10, n - 1, n + 1]);
+    if (kind === 'rest') return pcQ(wd(PS(n) + ' מהכיתה בנים, וכל השאר בנות.<br>כמה אחוזים בנות?'), 100 - n, [n, 100, 100 - n + 10, 100 - n - 10]);
+    return numQ(wd('כמה זה ' + PS(n) + ' מתוך 100 כדורים?'), n, [n * 10, 100 - n, n + 1, n + 10], 9);
+  } };
+  T.pcOne = { name: '💯 אחוז אחד', g: 2, q: function (lv) {
+    var k = R(1, lv === 1 ? 9 : lv === 2 ? 40 : 400), w = k * 100;
+    return numQ(wd('כמה זה אחוז אחד של ' + fmt(w) + '?'), k, [k * 10, w, k * 100 + k, k + 1, k * 2], 5);
+  } };
+  T.pcOf = { name: '💯 כמה זה X אחוזים', g: 2, q: function (lv) {
+    var easy = lv === 1, p = easy ? pick([50, 10]) : lv === 2 ? pick([50, 10, 25, 20, 5, 2, 3, 4]) : pick([15, 30, 40, 60, 75, 35, 12, 45]), k = R(1, easy ? 9 : lv === 2 ? 20 : 60) * (p === 25 ? 4 : 1), w = k * 100, a = k * p;
+    return numQ(wd('כמה זה ' + PS(p) + ' של ' + fmt(w) + '?'), a, [p, k, a * 10, a + k, w - a, k + p], 9);
+  } };
+  T.pcConv = { name: '💯 שבר, עשרוני ואחוז', g: 2, q: function (lv) {
+    var pool = [[1, 2, 50], [1, 4, 25], [3, 4, 75], [1, 10, 10], [1, 5, 20]];
+    if (lv >= 2) pool = pool.concat([[2, 5, 40], [3, 5, 60], [4, 5, 80], [3, 10, 30], [7, 10, 70]]);
+    if (lv >= 3) pool = pool.concat([[1, 20, 5], [3, 20, 15], [7, 20, 35], [1, 25, 4], [7, 25, 28]]);
+    var x = pick(pool), p = x[2], d = String(p / 100), kind = bag('pcc', ['fr', 'dec', 'back']);
+    if (kind === 'fr') return pcQ(wd('<span class="ex-in">' + FR(x[0], x[1]) + '</span> הם כמה אחוזים?'), p, [x[0] * 10 + x[1], x[1], x[0] + x[1], p + 10, p - 5]);
+    if (kind === 'dec') return pcQ('<div class="ex">' + d + ' = ?</div>', p, [p / 10, p * 10, p + 10, p + 5]);
+    return { show: '<div class="ex">' + p + '% = ?</div>', ans: d, opts: three(d, [String(p / 10), String(p), String(p / 1000), String((p + 10) / 100)], function () { return String(R(1, 99) / 100); }) };
+  } };
+  T.pcWhat = { name: '💯 כמה אחוזים זה?', g: 2, q: function (lv) {
+    var w = lv === 1 ? pick([100, 10, 50]) : lv === 2 ? pick([20, 25, 50, 10]) : 100 * R(2, 9), p = w < 100 || w === 100 ? R(1, w - 1) * 100 / w : R(2, 95), a = w / 100 * p;
+    return pcQ(wd(fmt(a) + ' מתוך ' + fmt(w) + '<br>הם כמה אחוזים?'), p, [a, w - a, 100 - p, p + 10, p + 5]);
+  } };
+  T.pcWord = { name: '💯 הנחה ובעיות אחוזים', g: 2, q: function (lv) {
+    var kind = bag('pcw', ['save', 'after', 'up', 'tot']), p = lv === 1 ? pick([10, 20, 50]) : pick([5, 10, 20, 25, 30, 40, 50]), w = 20 * R(lv === 1 ? 5 : 3, lv === 1 ? 25 : lv === 2 ? 40 : 100), a = w * p / 100, IT = pick(['נעליים', 'אופניים', 'משחק', 'תיק', 'שעון']);
+    if (kind === 'save') return numQ(wd(IT + ' ב-' + fmt(w) + ' שקלים, הנחה של ' + PS(p) + '.<br>בכמה שקלים המחיר יורד?'), a, [w - a, p, a * 2, a + 10, w / 100], 9);
+    if (kind === 'after') return numQ(wd(IT + ' ב-' + fmt(w) + ' שקלים, הנחה של ' + PS(p) + '.<br>מה המחיר אחרי ההנחה?'), w - a, [a, w + a, w - p, w - a + 10], 9);
+    if (kind === 'up') return numQ(wd(IT + ' ב-' + fmt(w) + ' שקלים, התייקרו ב-' + PS(p) + '.<br>מה המחיר עכשיו?'), w + a, [w - a, a, w + p, w + a + 10], 9);
+    var q = pick([10, 20, 25, 50]), v = R(2, 40), t = v * 100 / q;
+    return numQ(wd(PS(q) + ' של מספר הם ' + fmt(v) + '.<br>מהו המספר?'), t, [v * q, v * 10 === t ? v * 5 : v * 10, v + q, t + 10, t / 2], 9);
   } };
   T.oo = { name: '🧩 סדר פעולות', g: 2, q: function (lv) {
     for (var g = 0; g < 200; g++) {
@@ -1031,9 +1069,10 @@ body.duo .q .pic { height: min(18vh, 170px) }
   } };
   var GROUPS = [['➕ חשבון בסיסי', ['add', 'sub', 'mul', 'div', 'make']], ['🔢 מספרים', ['dig', 'mul10', 'seq', 'even', 'place', 'round', 'oo', 'negOne', 'negTwo']], ['🍕 שברים ועשרוניים', ['frCmp', 'frRed', 'frMix', 'decFr', 'decShift']],
     ['⚖️ יחס', ['rtRead', 'rtSame', 'rtSimp', 'rtMiss', 'rtWord']],
+    ['💯 אחוזים', ['pcMean', 'pcOne', 'pcOf', 'pcConv', 'pcWhat', 'pcWord']],
     ['📖 משפחות מילים', ['words', 'wFrac', 'wAngle', 'wTri', 'wQuad', 'wPar']]];
   // 3.11: דף המורים (robot.html): יחס עדיין לא אושר, ונשאר רק אצל הבודקים
-  if (CFG.noRatio) GROUPS = GROUPS.filter(function (g) { return g[1].indexOf('rtRead') < 0; });
+  if (CFG.noRatio) GROUPS = GROUPS.filter(function (g) { return g[1].indexOf('rtRead') < 0 && g[1].indexOf('pcOne') < 0; }); // גם אחוזים (3.11)
   var RECENT = [], LASTANS = null, LASTQ = null;
   function makeQ(topics, lv) {
     for (var g = 0; g < 50; g++) {
