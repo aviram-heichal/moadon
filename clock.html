@@ -391,6 +391,8 @@ function sWords(i) {
     play();
     document.getElementById('rp').onclick = function () { RUN++; var r3 = RUN; play(); };
     if (c.feel) document.getElementById('feel').onclick = function () {
+      // אבירם 18.11: אחרי הלחיצה לא אומרים שוב "רוצים להרגיש...". RUN++ מבטל את כל המשפטים שחיכו בתור (אחרת "רוצים להרגיש" עוד היה נשמע)
+      RUN++;
       var box = document.getElementById('feelBox'), t0 = Date.now(), r4 = RUN;
       box.innerHTML = '<div class="big" id="sec">0 שניות</div><div class="minbar"><i id="mb"></i></div><button class="btn sec small" id="stopF">✕ לעצור</button>';
       stopVoice(); music(true); guard(say('wFeelGo'));
