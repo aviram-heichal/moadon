@@ -758,7 +758,8 @@ body.duo .q .pic { height: min(18vh, 170px) }
     ['📖 משפחות מילים', ['words', 'wFrac', 'wAngle', 'wTri', 'wQuad', 'wPar']]];
   // 3.11: דף המורים (robot.html): יחס עדיין לא אושר, ונשאר רק אצל הבודקים
   // 🕐 18.11: קופסת השעון רק כשבשבוע יש נושא שעון, או בדף המורים (CFG.clock). השעון עדיין רק לבודקים במחולל
-  if (CFG.clock || (CFG.topics || []).indexOf('clk') >= 0) GROUPS.push(['🕐 שעון', ['clk']]);
+  GROUPS.push( // 18.11 ערב (אבירם): השעון פתוח לכולם, גם במשחק
+['🕐 שעון', ['clk']]);
   if (CFG.noRatio) GROUPS = GROUPS.filter(function (g) { return g[1].indexOf('rtRead') < 0 && g[1].indexOf('pcOne') < 0; }); // גם אחוזים (3.11)
   var RECENT = [], LASTANS = null, LASTQ = null;
   function makeQ(topics, lv) {
