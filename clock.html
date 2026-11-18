@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head><meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ללמוד שעון</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1b2a4a;--navy2:#2c4170;--gold:#d4a537;--gold2:#f3d27a;--cream:#fffaf0;--ok:#2e9d5b;--soft:#eef2fa;--txt:#1b2a4a;--card:#ffffff;--hint:#e8574d}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden;margin:0;background:var(--cream);color:var(--txt);font-family:Rubik,Arial,sans-serif;font-size:19px}
+button{font-family:inherit}
+#top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--navy);color:#fff;padding:10px 16px}
+#top .t{font-weight:800;font-size:20px}
+#ctlbar{position:sticky;top:52px;z-index:19;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;background:#eef2fa;padding:7px 10px;border-bottom:1px solid #d6deee}
+#ctlbar .lbl{font-size:16px;font-weight:700;color:var(--navy)}
+#ctlbar .rate{background:#fff;border:2px solid #c5cfe3;color:var(--navy);border-radius:12px;padding:6px 12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit}
+#ctlbar .rate.on{background:var(--navy);border-color:var(--navy);color:#fff}
+#skipBtn{background:var(--gold);border:0;color:var(--navy);border-radius:12px;padding:7px 14px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-inline-start:6px}
+.back{background:#fff;color:var(--navy);border:0;border-radius:12px;padding:8px 14px;font-size:17px;font-weight:700;cursor:pointer;white-space:nowrap}
+.back[hidden]{display:none}
+#app{max-width:760px;margin:0 auto;padding:16px 16px 60px}
+.card{background:var(--card);border-radius:22px;box-shadow:0 6px 22px rgba(27,42,74,.10);padding:20px;margin:12px 0;text-align:center}
+h1{font-size:34px;margin:6px 0 4px;font-weight:900}
+h2{font-size:26px;margin:4px 0 10px;font-weight:800}
+.sub{font-size:19px;color:#4a5a7a;margin:4px 0 12px}
+.def{font-size:25px;font-weight:800;color:var(--navy);line-height:1.55;margin:8px 0 10px}
+@media (max-width:480px){.def{font-size:21px}}
+.big{font-size:30px;font-weight:900;margin:10px 0;min-height:42px}
+.btn{background:var(--gold);color:var(--navy);border:0;border-radius:16px;padding:14px 26px;font-size:21px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #a97f1d;margin:6px}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #a97f1d}
+.btn.sec{background:var(--soft);box-shadow:0 4px 0 #c5cfe3}
+.btn.small{font-size:17px;padding:9px 16px}
+.row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.opt{background:#fff;border:3px solid #d6deee;border-radius:18px;padding:16px 8px;font-size:25px;font-weight:800;color:var(--navy);cursor:pointer}
+.opt.good{background:#dff5e7;border-color:var(--ok)}
+.opt.bad{background:#fdeceb;border-color:#e8a39e;opacity:.7}
+.clockwrap{position:relative;width:min(100%,380px,42vh);min-width:220px;margin:6px auto}
+.clockwrap svg{width:100%;height:auto;display:block;touch-action:none;-webkit-user-select:none;user-select:none}
+.clockwrap.big1{width:min(100%,400px,46vh)}
+.clockwrap,.clockwrap *{-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+/* תרגול: הכל במסך אחד. מחשב/טאבלט: השעון בצד אחד, השאלה + הכפתורים + "בדוק" בצד השני */
+.pgrid{display:flex;flex-direction:column;align-items:stretch}
+.pgrid .pside{display:flex;flex-direction:column}
+@media (min-width:640px){
+  .pgrid{display:grid;grid-template-columns:1.2fr 1fr;grid-template-areas:"c q" "c s";gap:4px 16px;align-items:start}
+  .pgrid #say{grid-area:q;margin-top:18px}
+  .pgrid #clk{grid-area:c}
+  .pgrid .pside{grid-area:s}
+  .pgrid .opt{font-size:22px;padding:14px 6px}
+  .pgrid .clockwrap{width:min(100%,380px,56vh)}
+  .pgrid .twoclk .clockwrap{width:100%}
+  #app.wide{max-width:980px}
+}
+@media (max-width:639px){.pgrid .clockwrap{width:min(100%,300px,34vh);min-width:160px}.pgrid .twoclk .clockwrap{width:100%}.pgrid .opt{padding:10px 6px;font-size:21px}.pgrid .big{font-size:23px;margin:4px 0}}
+.peanut{width:92px;height:92px;object-fit:contain;filter:drop-shadow(0 6px 8px rgba(0,0,0,.18))}
+.hello{display:flex;align-items:center;gap:12px;justify-content:center}
+.bounce{animation:bn .7s ease}
+@keyframes bn{0%{transform:scale(1)}30%{transform:scale(1.25) rotate(-8deg)}60%{transform:scale(.95) rotate(5deg)}100%{transform:scale(1)}}
+.stages{display:grid;gap:10px;margin-top:10px}
+.stage{display:flex;align-items:center;gap:12px;background:#fff;border:3px solid #e2e8f4;border-radius:18px;padding:14px;cursor:pointer;text-align:right;font-size:20px;font-weight:700;color:var(--navy)}
+.stage .n{width:42px;height:42px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-weight:900;flex:none}
+.stage.done{border-color:var(--ok)}
+.stage.done .n{background:var(--ok);color:#fff}
+.stage small{display:block;font-weight:400;color:#5b6b8a;font-size:16px}
+.dots{display:flex;gap:7px;justify-content:center;margin:8px 0}
+.dot{width:16px;height:16px;border-radius:50%;background:#dbe2ef}
+.dot.on{background:var(--ok)}
+.dot.x{background:#f0b5b0}
+.label{display:inline-block;background:var(--navy);color:#fff;border-radius:14px;padding:8px 18px;font-size:28px;font-weight:900;margin:8px 0;min-width:200px}
+.label.gold{background:var(--gold);color:var(--navy)}
+.tip{background:#fff6dc;border:2px dashed var(--gold);border-radius:16px;padding:12px;margin:10px 0;font-size:19px}
+.replay{background:none;border:0;font-size:17px;color:var(--navy2);cursor:pointer;text-decoration:underline;margin-top:6px}
+#conf{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
+.cf{position:absolute;width:12px;height:16px;border-radius:3px;top:-20px;animation:fall 1.6s ease-in forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(540deg);opacity:.9}}
+.minbar{height:22px;background:var(--soft);border-radius:12px;overflow:hidden;margin:12px 0}
+.minbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.gender{display:flex;gap:10px;justify-content:center;margin:10px 0}
+.gender .btn{min-width:120px}
+.gender .btn.on{outline:4px solid var(--navy)}
+input.name{font-family:inherit;font-size:22px;padding:10px 14px;border-radius:14px;border:3px solid #d6deee;text-align:center;width:min(80vw,300px)}
+.ltabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 12px}
+.ltab{background:var(--soft);border:3px solid transparent;border-radius:14px;padding:8px 4px;font-family:inherit;font-size:17px;font-weight:800;color:var(--navy);cursor:pointer}
+.ltab small{display:block;font-size:13px;font-weight:600;color:#5b6b8a}
+.ltab.on{background:#fff;border-color:var(--gold)}
+.twoclk{display:flex;gap:10px;justify-content:center;align-items:flex-start}
+.twoclk>div{flex:1;min-width:0;max-width:330px}
+.twoclk .clockwrap{width:100%;min-width:0}
+.cap{font-size:17px;font-weight:800;margin-top:2px}
+.cap.h{color:var(--navy)}.cap.m{color:#2f6fd6}
+.nudge{display:flex;gap:8px;justify-content:center;margin-top:6px}
+.nudge .btn{font-size:17px;padding:8px 14px}
+#tapSound{position:fixed;inset:0;z-index:60;background:rgba(27,42,74,.55);display:flex;align-items:center;justify-content:center}
+#tapSound[hidden]{display:none}
+.mergefly{transition:transform 1.6s ease,opacity 1.6s ease}
+@media (max-width:480px){.ltab{font-size:15px}.ltab small{font-size:11px}.cap{font-size:15px}}
+@media (max-width:480px){#top .t{font-size:17px}.back{font-size:15px;padding:7px 10px}.card{padding:14px}#app{padding:10px 12px 50px}h1{font-size:28px}.opt{font-size:22px;padding:14px 6px}.big{font-size:25px}.label{font-size:24px}}
+</style>
+</head>
+<body>
+<div id="top"><button class="back" id="backBtn">→ חזרה</button><div class="t">🕐 ללמוד שעון</div></div>
+<div id="ctlbar"><span class="lbl">🔊 מהירות דיבור:</span><button class="rate" data-r="0.8">לאט</button><button class="rate" data-r="1">רגיל</button><button class="rate" data-r="1.2">1.2</button><button class="rate" data-r="1.5">1.5</button><button id="skipBtn">⏭ דלג</button></div>
+<div id="app"></div>
+<div id="conf"></div>
+<div id="tapSound" hidden><button class="btn" id="tapSoundBtn" style="font-size:26px;padding:20px 34px">🔊 לחצו כאן כדי לשמוע</button></div>
+<script>
+'use strict';
+var VOICES = {"c1":"https://aviram-heichal.github.io/moadon/v/clock/c1.mp3","c10":"https://aviram-heichal.github.io/moadon/v/clock/c10.mp3","c11":"https://aviram-heichal.github.io/moadon/v/clock/c11.mp3","c12":"https://aviram-heichal.github.io/moadon/v/clock/c12.mp3","c13":"https://aviram-heichal.github.io/moadon/v/clock/c13.mp3","c14":"https://aviram-heichal.github.io/moadon/v/clock/c14.mp3","c15":"https://aviram-heichal.github.io/moadon/v/clock/c15.mp3","c16":"https://aviram-heichal.github.io/moadon/v/clock/c16.mp3","c17":"https://aviram-heichal.github.io/moadon/v/clock/c17.mp3","c18":"https://aviram-heichal.github.io/moadon/v/clock/c18.mp3","c19":"https://aviram-heichal.github.io/moadon/v/clock/c19.mp3","c2":"https://aviram-heichal.github.io/moadon/v/clock/c2.mp3","c20":"https://aviram-heichal.github.io/moadon/v/clock/c20.mp3","c21":"https://aviram-heichal.github.io/moadon/v/clock/c21.mp3","c22":"https://aviram-heichal.github.io/moadon/v/clock/c22.mp3","c23":"https://aviram-heichal.github.io/moadon/v/clock/c23.mp3","c24":"https://aviram-heichal.github.io/moadon/v/clock/c24.mp3","c25":"https://aviram-heichal.github.io/moadon/v/clock/c25.mp3","c26":"https://aviram-heichal.github.io/moadon/v/clock/c26.mp3","c27":"https://aviram-heichal.github.io/moadon/v/clock/c27.mp3","c28":"https://aviram-heichal.github.io/moadon/v/clock/c28.mp3","c29":"https://aviram-heichal.github.io/moadon/v/clock/c29.mp3","c3":"https://aviram-heichal.github.io/moadon/v/clock/c3.mp3","c30":"https://aviram-heichal.github.io/moadon/v/clock/c30.mp3","c31":"https://aviram-heichal.github.io/moadon/v/clock/c31.mp3","c32":"https://aviram-heichal.github.io/moadon/v/clock/c32.mp3","c33":"https://aviram-heichal.github.io/moadon/v/clock/c33.mp3","c34":"https://aviram-heichal.github.io/moadon/v/clock/c34.mp3","c35":"https://aviram-heichal.github.io/moadon/v/clock/c35.mp3","c36":"https://aviram-heichal.github.io/moadon/v/clock/c36.mp3","c37":"https://aviram-heichal.github.io/moadon/v/clock/c37.mp3","c38":"https://aviram-heichal.github.io/moadon/v/clock/c38.mp3","c39":"https://aviram-heichal.github.io/moadon/v/clock/c39.mp3","c4":"https://aviram-heichal.github.io/moadon/v/clock/c4.mp3","c40":"https://aviram-heichal.github.io/moadon/v/clock/c40.mp3","c41":"https://aviram-heichal.github.io/moadon/v/clock/c41.mp3","c42":"https://aviram-heichal.github.io/moadon/v/clock/c42.mp3","c43":"https://aviram-heichal.github.io/moadon/v/clock/c43.mp3","c44":"https://aviram-heichal.github.io/moadon/v/clock/c44.mp3","c45":"https://aviram-heichal.github.io/moadon/v/clock/c45.mp3","c46":"https://aviram-heichal.github.io/moadon/v/clock/c46.mp3","c47":"https://aviram-heichal.github.io/moadon/v/clock/c47.mp3","c48":"https://aviram-heichal.github.io/moadon/v/clock/c48.mp3","c49":"https://aviram-heichal.github.io/moadon/v/clock/c49.mp3","c5":"https://aviram-heichal.github.io/moadon/v/clock/c5.mp3","c50":"https://aviram-heichal.github.io/moadon/v/clock/c50.mp3","c51":"https://aviram-heichal.github.io/moadon/v/clock/c51.mp3","c52":"https://aviram-heichal.github.io/moadon/v/clock/c52.mp3","c53":"https://aviram-heichal.github.io/moadon/v/clock/c53.mp3","c54":"https://aviram-heichal.github.io/moadon/v/clock/c54.mp3","c55":"https://aviram-heichal.github.io/moadon/v/clock/c55.mp3","c56":"https://aviram-heichal.github.io/moadon/v/clock/c56.mp3","c57":"https://aviram-heichal.github.io/moadon/v/clock/c57.mp3","c58":"https://aviram-heichal.github.io/moadon/v/clock/c58.mp3","c59":"https://aviram-heichal.github.io/moadon/v/clock/c59.mp3","c6":"https://aviram-heichal.github.io/moadon/v/clock/c6.mp3","c7":"https://aviram-heichal.github.io/moadon/v/clock/c7.mp3","c8":"https://aviram-heichal.github.io/moadon/v/clock/c8.mp3","c9":"https://aviram-heichal.github.io/moadon/v/clock/c9.mp3","cnt1":"https://aviram-heichal.github.io/moadon/v/clock/cnt1.mp3","cntQ":"https://aviram-heichal.github.io/moadon/v/clock/cntQ.mp3","drg2":"https://aviram-heichal.github.io/moadon/v/clock/drg2.mp3","drg3":"https://aviram-heichal.github.io/moadon/v/clock/drg3.mp3","drgQ2":"https://aviram-heichal.github.io/moadon/v/clock/drgQ2.mp3","drgQ3":"https://aviram-heichal.github.io/moadon/v/clock/drgQ3.mp3","f10":"https://aviram-heichal.github.io/moadon/v/clock/f10.mp3","f15":"https://aviram-heichal.github.io/moadon/v/clock/f15.mp3","f20":"https://aviram-heichal.github.io/moadon/v/clock/f20.mp3","f25":"https://aviram-heichal.github.io/moadon/v/clock/f25.mp3","f30":"https://aviram-heichal.github.io/moadon/v/clock/f30.mp3","f35":"https://aviram-heichal.github.io/moadon/v/clock/f35.mp3","f40":"https://aviram-heichal.github.io/moadon/v/clock/f40.mp3","f45":"https://aviram-heichal.github.io/moadon/v/clock/f45.mp3","f5":"https://aviram-heichal.github.io/moadon/v/clock/f5.mp3","f50":"https://aviram-heichal.github.io/moadon/v/clock/f50.mp3","f55":"https://aviram-heichal.github.io/moadon/v/clock/f55.mp3","f60":"https://aviram-heichal.github.io/moadon/v/clock/f60.mp3","fv1":"https://aviram-heichal.github.io/moadon/v/clock/fv1.mp3","fv2":"https://aviram-heichal.github.io/moadon/v/clock/fv2.mp3","hf1":"https://aviram-heichal.github.io/moadon/v/clock/hf1.mp3","hf2":"https://aviram-heichal.github.io/moadon/v/clock/hf2.mp3","hf3":"https://aviram-heichal.github.io/moadon/v/clock/hf3.mp3","hh1":"https://aviram-heichal.github.io/moadon/v/clock/hh1.mp3","hh10":"https://aviram-heichal.github.io/moadon/v/clock/hh10.mp3","hh11":"https://aviram-heichal.github.io/moadon/v/clock/hh11.mp3","hh12":"https://aviram-heichal.github.io/moadon/v/clock/hh12.mp3","hh2":"https://aviram-heichal.github.io/moadon/v/clock/hh2.mp3","hh3":"https://aviram-heichal.github.io/moadon/v/clock/hh3.mp3","hh4":"https://aviram-heichal.github.io/moadon/v/clock/hh4.mp3","hh5":"https://aviram-heichal.github.io/moadon/v/clock/hh5.mp3","hh6":"https://aviram-heichal.github.io/moadon/v/clock/hh6.mp3","hh7":"https://aviram-heichal.github.io/moadon/v/clock/hh7.mp3","hh8":"https://aviram-heichal.github.io/moadon/v/clock/hh8.mp3","hh9":"https://aviram-heichal.github.io/moadon/v/clock/hh9.mp3","hq1":"https://aviram-heichal.github.io/moadon/v/clock/hq1.mp3","hq10":"https://aviram-heichal.github.io/moadon/v/clock/hq10.mp3","hq11":"https://aviram-heichal.github.io/moadon/v/clock/hq11.mp3","hq12":"https://aviram-heichal.github.io/moadon/v/clock/hq12.mp3","hq2":"https://aviram-heichal.github.io/moadon/v/clock/hq2.mp3","hq3":"https://aviram-heichal.github.io/moadon/v/clock/hq3.mp3","hq4":"https://aviram-heichal.github.io/moadon/v/clock/hq4.mp3","hq5":"https://aviram-heichal.github.io/moadon/v/clock/hq5.mp3","hq6":"https://aviram-heichal.github.io/moadon/v/clock/hq6.mp3","hq7":"https://aviram-heichal.github.io/moadon/v/clock/hq7.mp3","hq8":"https://aviram-heichal.github.io/moadon/v/clock/hq8.mp3","hq9":"https://aviram-heichal.github.io/moadon/v/clock/hq9.mp3","L2done":"https://aviram-heichal.github.io/moadon/v/clock/L2done.mp3","L2hi":"https://aviram-heichal.github.io/moadon/v/clock/L2hi.mp3","L3done":"https://aviram-heichal.github.io/moadon/v/clock/L3done.mp3","L3hi":"https://aviram-heichal.github.io/moadon/v/clock/L3hi.mp3","L4done":"https://aviram-heichal.github.io/moadon/v/clock/L4done.mp3","L4hi":"https://aviram-heichal.github.io/moadon/v/clock/L4hi.mp3","m1":"https://aviram-heichal.github.io/moadon/v/clock/m1.mp3","m10":"https://aviram-heichal.github.io/moadon/v/clock/m10.mp3","m11":"https://aviram-heichal.github.io/moadon/v/clock/m11.mp3","m12":"https://aviram-heichal.github.io/moadon/v/clock/m12.mp3","m13":"https://aviram-heichal.github.io/moadon/v/clock/m13.mp3","m14":"https://aviram-heichal.github.io/moadon/v/clock/m14.mp3","m15":"https://aviram-heichal.github.io/moadon/v/clock/m15.mp3","m16":"https://aviram-heichal.github.io/moadon/v/clock/m16.mp3","m17":"https://aviram-heichal.github.io/moadon/v/clock/m17.mp3","m18":"https://aviram-heichal.github.io/moadon/v/clock/m18.mp3","m19":"https://aviram-heichal.github.io/moadon/v/clock/m19.mp3","m2":"https://aviram-heichal.github.io/moadon/v/clock/m2.mp3","m20":"https://aviram-heichal.github.io/moadon/v/clock/m20.mp3","m21":"https://aviram-heichal.github.io/moadon/v/clock/m21.mp3","m22":"https://aviram-heichal.github.io/moadon/v/clock/m22.mp3","m23":"https://aviram-heichal.github.io/moadon/v/clock/m23.mp3","m24":"https://aviram-heichal.github.io/moadon/v/clock/m24.mp3","m25":"https://aviram-heichal.github.io/moadon/v/clock/m25.mp3","m26":"https://aviram-heichal.github.io/moadon/v/clock/m26.mp3","m27":"https://aviram-heichal.github.io/moadon/v/clock/m27.mp3","m28":"https://aviram-heichal.github.io/moadon/v/clock/m28.mp3","m29":"https://aviram-heichal.github.io/moadon/v/clock/m29.mp3","m3":"https://aviram-heichal.github.io/moadon/v/clock/m3.mp3","m30":"https://aviram-heichal.github.io/moadon/v/clock/m30.mp3","m31":"https://aviram-heichal.github.io/moadon/v/clock/m31.mp3","m32":"https://aviram-heichal.github.io/moadon/v/clock/m32.mp3","m33":"https://aviram-heichal.github.io/moadon/v/clock/m33.mp3","m34":"https://aviram-heichal.github.io/moadon/v/clock/m34.mp3","m35":"https://aviram-heichal.github.io/moadon/v/clock/m35.mp3","m36":"https://aviram-heichal.github.io/moadon/v/clock/m36.mp3","m37":"https://aviram-heichal.github.io/moadon/v/clock/m37.mp3","m38":"https://aviram-heichal.github.io/moadon/v/clock/m38.mp3","m39":"https://aviram-heichal.github.io/moadon/v/clock/m39.mp3","m4":"https://aviram-heichal.github.io/moadon/v/clock/m4.mp3","m40":"https://aviram-heichal.github.io/moadon/v/clock/m40.mp3","m41":"https://aviram-heichal.github.io/moadon/v/clock/m41.mp3","m42":"https://aviram-heichal.github.io/moadon/v/clock/m42.mp3","m43":"https://aviram-heichal.github.io/moadon/v/clock/m43.mp3","m44":"https://aviram-heichal.github.io/moadon/v/clock/m44.mp3","m45":"https://aviram-heichal.github.io/moadon/v/clock/m45.mp3","m46":"https://aviram-heichal.github.io/moadon/v/clock/m46.mp3","m47":"https://aviram-heichal.github.io/moadon/v/clock/m47.mp3","m48":"https://aviram-heichal.github.io/moadon/v/clock/m48.mp3","m49":"https://aviram-heichal.github.io/moadon/v/clock/m49.mp3","m5":"https://aviram-heichal.github.io/moadon/v/clock/m5.mp3","m50":"https://aviram-heichal.github.io/moadon/v/clock/m50.mp3","m51":"https://aviram-heichal.github.io/moadon/v/clock/m51.mp3","m52":"https://aviram-heichal.github.io/moadon/v/clock/m52.mp3","m53":"https://aviram-heichal.github.io/moadon/v/clock/m53.mp3","m54":"https://aviram-heichal.github.io/moadon/v/clock/m54.mp3","m55":"https://aviram-heichal.github.io/moadon/v/clock/m55.mp3","m56":"https://aviram-heichal.github.io/moadon/v/clock/m56.mp3","m57":"https://aviram-heichal.github.io/moadon/v/clock/m57.mp3","m58":"https://aviram-heichal.github.io/moadon/v/clock/m58.mp3","m59":"https://aviram-heichal.github.io/moadon/v/clock/m59.mp3","m6":"https://aviram-heichal.github.io/moadon/v/clock/m6.mp3","m7":"https://aviram-heichal.github.io/moadon/v/clock/m7.mp3","m8":"https://aviram-heichal.github.io/moadon/v/clock/m8.mp3","m9":"https://aviram-heichal.github.io/moadon/v/clock/m9.mp3","mc1":"https://aviram-heichal.github.io/moadon/v/clock/mc1.mp3","mc2":"https://aviram-heichal.github.io/moadon/v/clock/mc2.mp3","mc3":"https://aviram-heichal.github.io/moadon/v/clock/mc3.mp3","mc4":"https://aviram-heichal.github.io/moadon/v/clock/mc4.mp3","mg1":"https://aviram-heichal.github.io/moadon/v/clock/mg1.mp3","mg2":"https://aviram-heichal.github.io/moadon/v/clock/mg2.mp3","mg3":"https://aviram-heichal.github.io/moadon/v/clock/mg3.mp3","mx1":"https://aviram-heichal.github.io/moadon/v/clock/mx1.mp3","mx2":"https://aviram-heichal.github.io/moadon/v/clock/mx2.mp3","nm1":"https://aviram-heichal.github.io/moadon/v/clock/nm1.mp3","nm2":"https://aviram-heichal.github.io/moadon/v/clock/nm2.mp3","nmQ":"https://aviram-heichal.github.io/moadon/v/clock/nmQ.mp3","qr1":"https://aviram-heichal.github.io/moadon/v/clock/qr1.mp3","qr2":"https://aviram-heichal.github.io/moadon/v/clock/qr2.mp3","qt1":"https://aviram-heichal.github.io/moadon/v/clock/qt1.mp3","qt10":"https://aviram-heichal.github.io/moadon/v/clock/qt10.mp3","qt11":"https://aviram-heichal.github.io/moadon/v/clock/qt11.mp3","qt12":"https://aviram-heichal.github.io/moadon/v/clock/qt12.mp3","qt2":"https://aviram-heichal.github.io/moadon/v/clock/qt2.mp3","qt3":"https://aviram-heichal.github.io/moadon/v/clock/qt3.mp3","qt4":"https://aviram-heichal.github.io/moadon/v/clock/qt4.mp3","qt5":"https://aviram-heichal.github.io/moadon/v/clock/qt5.mp3","qt6":"https://aviram-heichal.github.io/moadon/v/clock/qt6.mp3","qt7":"https://aviram-heichal.github.io/moadon/v/clock/qt7.mp3","qt8":"https://aviram-heichal.github.io/moadon/v/clock/qt8.mp3","qt9":"https://aviram-heichal.github.io/moadon/v/clock/qt9.mp3","qto1":"https://aviram-heichal.github.io/moadon/v/clock/qto1.mp3","qto2":"https://aviram-heichal.github.io/moadon/v/clock/qto2.mp3","qtTrap":"https://aviram-heichal.github.io/moadon/v/clock/qtTrap.mp3","rd2Q":"https://aviram-heichal.github.io/moadon/v/clock/rd2Q.mp3","rnd1":"https://aviram-heichal.github.io/moadon/v/clock/rnd1.mp3","rnd2":"https://aviram-heichal.github.io/moadon/v/clock/rnd2.mp3","two1":"https://aviram-heichal.github.io/moadon/v/clock/two1.mp3","two2":"https://aviram-heichal.github.io/moadon/v/clock/two2.mp3","two3":"https://aviram-heichal.github.io/moadon/v/clock/two3.mp3","two4":"https://aviram-heichal.github.io/moadon/v/clock/two4.mp3","two5":"https://aviram-heichal.github.io/moadon/v/clock/two5.mp3","twoRule":"https://aviram-heichal.github.io/moadon/v/clock/twoRule.mp3","whBad":"https://aviram-heichal.github.io/moadon/v/clock/whBad.mp3","whQh":"https://aviram-heichal.github.io/moadon/v/clock/whQh.mp3","whQm":"https://aviram-heichal.github.io/moadon/v/clock/whQm.mp3","wrongM":"https://aviram-heichal.github.io/moadon/v/clock/wrongM.mp3","dgEx":"https://aviram-heichal.github.io/moadon/v/clock/dgEx.mp3","exTwo":"https://aviram-heichal.github.io/moadon/v/clock/exTwo.mp3","mc0":"https://aviram-heichal.github.io/moadon/v/clock/mc0.mp3","mc0b":"https://aviram-heichal.github.io/moadon/v/clock/mc0b.mp3","mcSixty":"https://aviram-heichal.github.io/moadon/v/clock/mcSixty.mp3","mcZero":"https://aviram-heichal.github.io/moadon/v/clock/mcZero.mp3","mgH":"https://aviram-heichal.github.io/moadon/v/clock/mgH.mp3","mgM":"https://aviram-heichal.github.io/moadon/v/clock/mgM.mp3","mgT":"https://aviram-heichal.github.io/moadon/v/clock/mgT.mp3","r3a":"https://aviram-heichal.github.io/moadon/v/clock/r3a.mp3","r3b":"https://aviram-heichal.github.io/moadon/v/clock/r3b.mp3","rdH":"https://aviram-heichal.github.io/moadon/v/clock/rdH.mp3","rdM":"https://aviram-heichal.github.io/moadon/v/clock/rdM.mp3","rdT":"https://aviram-heichal.github.io/moadon/v/clock/rdT.mp3","two6":"https://aviram-heichal.github.io/moadon/v/clock/two6.mp3","yourTurn":"https://aviram-heichal.github.io/moadon/v/clock/yourTurn.mp3","check1":"https://aviram-heichal.github.io/moadon/v/clock/check1.mp3","checkAgain":"https://aviram-heichal.github.io/moadon/v/clock/checkAgain.mp3","done":"https://aviram-heichal.github.io/moadon/v/clock/done.mp3","drag1":"https://aviram-heichal.github.io/moadon/v/clock/drag1.mp3","dragQ":"https://aviram-heichal.github.io/moadon/v/clock/dragQ.mp3","face1":"https://aviram-heichal.github.io/moadon/v/clock/face1.mp3","face2":"https://aviram-heichal.github.io/moadon/v/clock/face2.mp3","findQ":"https://aviram-heichal.github.io/moadon/v/clock/findQ.mp3","h1":"https://aviram-heichal.github.io/moadon/v/clock/h1.mp3","h10":"https://aviram-heichal.github.io/moadon/v/clock/h10.mp3","h11":"https://aviram-heichal.github.io/moadon/v/clock/h11.mp3","h12":"https://aviram-heichal.github.io/moadon/v/clock/h12.mp3","h2":"https://aviram-heichal.github.io/moadon/v/clock/h2.mp3","h3":"https://aviram-heichal.github.io/moadon/v/clock/h3.mp3","h4":"https://aviram-heichal.github.io/moadon/v/clock/h4.mp3","h5":"https://aviram-heichal.github.io/moadon/v/clock/h5.mp3","h6":"https://aviram-heichal.github.io/moadon/v/clock/h6.mp3","h7":"https://aviram-heichal.github.io/moadon/v/clock/h7.mp3","h8":"https://aviram-heichal.github.io/moadon/v/clock/h8.mp3","h9":"https://aviram-heichal.github.io/moadon/v/clock/h9.mp3","hi":"https://aviram-heichal.github.io/moadon/v/clock/hi.mp3","hp1":"https://aviram-heichal.github.io/moadon/v/clock/hp1.mp3","hp10":"https://aviram-heichal.github.io/moadon/v/clock/hp10.mp3","hp11":"https://aviram-heichal.github.io/moadon/v/clock/hp11.mp3","hp12":"https://aviram-heichal.github.io/moadon/v/clock/hp12.mp3","hp2":"https://aviram-heichal.github.io/moadon/v/clock/hp2.mp3","hp3":"https://aviram-heichal.github.io/moadon/v/clock/hp3.mp3","hp4":"https://aviram-heichal.github.io/moadon/v/clock/hp4.mp3","hp5":"https://aviram-heichal.github.io/moadon/v/clock/hp5.mp3","hp6":"https://aviram-heichal.github.io/moadon/v/clock/hp6.mp3","hp7":"https://aviram-heichal.github.io/moadon/v/clock/hp7.mp3","hp8":"https://aviram-heichal.github.io/moadon/v/clock/hp8.mp3","hp9":"https://aviram-heichal.github.io/moadon/v/clock/hp9.mp3","justN":"https://aviram-heichal.github.io/moadon/v/clock/justN.mp3","mv1":"https://aviram-heichal.github.io/moadon/v/clock/mv1.mp3","mv2":"https://aviram-heichal.github.io/moadon/v/clock/mv2.mp3","mv3":"https://aviram-heichal.github.io/moadon/v/clock/mv3.mp3","mv4":"https://aviram-heichal.github.io/moadon/v/clock/mv4.mp3","mv5":"https://aviram-heichal.github.io/moadon/v/clock/mv5.mp3","mv6":"https://aviram-heichal.github.io/moadon/v/clock/mv6.mp3","mvRule":"https://aviram-heichal.github.io/moadon/v/clock/mvRule.mp3","n1":"https://aviram-heichal.github.io/moadon/v/clock/n1.mp3","n10":"https://aviram-heichal.github.io/moadon/v/clock/n10.mp3","n11":"https://aviram-heichal.github.io/moadon/v/clock/n11.mp3","n12":"https://aviram-heichal.github.io/moadon/v/clock/n12.mp3","n2":"https://aviram-heichal.github.io/moadon/v/clock/n2.mp3","n3":"https://aviram-heichal.github.io/moadon/v/clock/n3.mp3","n4":"https://aviram-heichal.github.io/moadon/v/clock/n4.mp3","n5":"https://aviram-heichal.github.io/moadon/v/clock/n5.mp3","n6":"https://aviram-heichal.github.io/moadon/v/clock/n6.mp3","n7":"https://aviram-heichal.github.io/moadon/v/clock/n7.mp3","n8":"https://aviram-heichal.github.io/moadon/v/clock/n8.mp3","n9":"https://aviram-heichal.github.io/moadon/v/clock/n9.mp3","p1":"https://aviram-heichal.github.io/moadon/v/clock/p1.mp3","p2":"https://aviram-heichal.github.io/moadon/v/clock/p2.mp3","p3":"https://aviram-heichal.github.io/moadon/v/clock/p3.mp3","p4":"https://aviram-heichal.github.io/moadon/v/clock/p4.mp3","p5":"https://aviram-heichal.github.io/moadon/v/clock/p5.mp3","s1":"https://aviram-heichal.github.io/moadon/v/clock/s1.mp3","s10":"https://aviram-heichal.github.io/moadon/v/clock/s10.mp3","s11":"https://aviram-heichal.github.io/moadon/v/clock/s11.mp3","s12":"https://aviram-heichal.github.io/moadon/v/clock/s12.mp3","s2":"https://aviram-heichal.github.io/moadon/v/clock/s2.mp3","s3":"https://aviram-heichal.github.io/moadon/v/clock/s3.mp3","s4":"https://aviram-heichal.github.io/moadon/v/clock/s4.mp3","s5":"https://aviram-heichal.github.io/moadon/v/clock/s5.mp3","s6":"https://aviram-heichal.github.io/moadon/v/clock/s6.mp3","s7":"https://aviram-heichal.github.io/moadon/v/clock/s7.mp3","s8":"https://aviram-heichal.github.io/moadon/v/clock/s8.mp3","s9":"https://aviram-heichal.github.io/moadon/v/clock/s9.mp3","sayIt":"https://aviram-heichal.github.io/moadon/v/clock/sayIt.mp3","small1":"https://aviram-heichal.github.io/moadon/v/clock/small1.mp3","small2":"https://aviram-heichal.github.io/moadon/v/clock/small2.mp3","trap":"https://aviram-heichal.github.io/moadon/v/clock/trap.mp3","wClock":"https://aviram-heichal.github.io/moadon/v/clock/wClock.mp3","wFeel":"https://aviram-heichal.github.io/moadon/v/clock/wFeel.mp3","wFeelEnd":"https://aviram-heichal.github.io/moadon/v/clock/wFeelEnd.mp3","wFeelGo":"https://aviram-heichal.github.io/moadon/v/clock/wFeelGo.mp3","wHand":"https://aviram-heichal.github.io/moadon/v/clock/wHand.mp3","wHands":"https://aviram-heichal.github.io/moadon/v/clock/wHands.mp3","whatT":"https://aviram-heichal.github.io/moadon/v/clock/whatT.mp3","wHour":"https://aviram-heichal.github.io/moadon/v/clock/wHour.mp3","wMin":"https://aviram-heichal.github.io/moadon/v/clock/wMin.mp3","wordsDone":"https://aviram-heichal.github.io/moadon/v/clock/wordsDone.mp3","wrong":"https://aviram-heichal.github.io/moadon/v/clock/wrong.mp3","youNow":"https://aviram-heichal.github.io/moadon/v/clock/youNow.mp3"};
+var PEANUT = 'data:image/webp;base64,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';
+var CFG = window.CLOCK_CFG || {};
+var WHO = CFG.who || '', G = CFG.g || '';            // g: 'm' / 'f' / ''
+var KEY = 'clock-v1-' + (WHO || 'kid');
+var NUMS = ['', 'אחת', 'שתיים', 'שלוש', 'ארבע', 'חמש', 'שש', 'שבע', 'שמונה', 'תשע', 'עשר', 'אחת עשרה', 'שתים עשרה'];
+var LESSONS = [
+  { name: 'המחוג הקצר', hi: 'hi', done: 'done', stages: [
+    { id: 'words', name: 'מילים חדשות', d: 'שעון, שעה, דקה, מחוג' },
+    { id: 'face', name: 'המספרים בשעון', d: 'מ-1 עד 12, ושוב מההתחלה' },
+    { id: 'exact', name: 'המחוג הקצר', d: 'המחוג מצביע על מספר: השעה בדיוק' },
+    { id: 'move', name: 'הזמן עובר', d: '4 בדיוק, 4 וקצת, כמעט 5' },
+    { id: 'some', name: '4 ומשהו', d: 'מה השעה כשהמחוג בין שני מספרים?' },
+    { id: 'drag', name: 'מזיזים את המחוג', d: 'עכשיו את/ה מראה את השעה' },
+    { id: 'check', name: 'בדיקה: 3 ברצף', d: 'שלוש תשובות נכונות ברצף' }] },
+  { name: 'שעון הדקות', hi: 'L2hi', done: 'L2done', stages: [
+    { id: 'mclock', name: 'מכירים את שעון הדקות', d: 'מחוג ארוך, 60 קווים = 60 דקות' },
+    { id: 'two', name: 'שני שעונים', d: '4 ודקה, 4 ו-2 דקות, 4 ו-3 דקות' },
+    { id: 'count', name: 'סופרים דקות', d: 'כמה קווים עבר המחוג?' },
+    { id: 'fives', name: 'קופצים בחמישיות', d: '5, 10, 15, 20...' },
+    { id: 'mix', name: 'חמישיות ועוד קצת', d: '25 ועוד 2 = 27 דקות' },
+    { id: 'read2', name: 'קוראים שני שעונים', d: 'שעה מהשעון האחד, דקות מהשני' },
+    { id: 'drag2', name: 'מזיזים את מחוג הדקות', d: 'עכשיו את/ה מראה את הדקות' },
+    { id: 'check2', name: 'בדיקה: 3 ברצף', d: 'שלוש תשובות נכונות ברצף' }] },
+  { name: 'שני מחוגים בשעון אחד', hi: 'L3hi', done: 'L3done', stages: [
+    { id: 'merge', name: 'שני שעונים נהיים אחד', d: 'מחוג קצר = שעות, מחוג ארוך = דקות' },
+    { id: 'round', name: 'סיבוב שלם = שעה', d: 'מחוג הדקות מסתובב, מחוג השעות זז מספר אחד' },
+    { id: 'which', name: 'איזה מחוג?', d: 'נוגעים במחוג הנכון' },
+    { id: 'nums', name: 'כל מספר = 5 דקות', d: '1 = 5 דקות, 2 = 10, 3 = 15...' },
+    { id: 'read3', name: 'קוראים את השעון', d: 'קוראים את שני המחוגים' },
+    { id: 'drag3', name: 'מזיזים את המחוגים', d: 'כמו בשעון אמיתי' },
+    { id: 'check3', name: 'בדיקה: 3 ברצף', d: 'שלוש תשובות נכונות ברצף' }] },
+  { name: 'חצי ורבע', hi: 'L4hi', done: 'L4done', stages: [
+    { id: 'half', name: 'וחצי', d: 'חצי סיבוב = 30 דקות = חצי שעה' },
+    { id: 'quarter', name: 'ורבע', d: 'רבע סיבוב = 15 דקות' },
+    { id: 'qto', name: 'רבע ל...', d: '45 דקות = רבע לשעה הבאה' },
+    { id: 'readHQ', name: 'קוראים: ורבע, וחצי, רבע ל', d: 'בדיוק, ורבע, וחצי, רבע ל' },
+    { id: 'dragHQ', name: 'מזיזים את המחוגים', d: 'ורבע, וחצי, רבע ל' },
+    { id: 'check4', name: 'בדיקה סופית: 3 ברצף', d: 'ואז: סיימת את כל השעון!' }] }
+];
+var CUR = 0, STAGES = LESSONS[0].stages;
+function dkey(i, l) { l = l == null ? CUR : l; return (l ? (l + 1) + '.' : '') + LESSONS[l].stages[i].id; }
+function gx(m, f, n) { return G === 'm' ? m : G === 'f' ? f : (n || m + '/' + f.slice(-1)); }
+function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
+function save(p) { try { localStorage.setItem(KEY, JSON.stringify(p)); } catch (e) {} }
+var P = load(); P.done = P.done || {};
+var $app = document.getElementById('app');
+var RUN = 0;                     // כל מסך חדש מעלה את המספר, וכך מפסיקים אנימציות/קול של המסך הקודם
+function wait(ms) { var r = RUN; return new Promise(function (ok, no) { if (SKIPPING) { setTimeout(function () { r === RUN ? ok() : no('stop'); }, 0); return; } var tm = setTimeout(function () { r === RUN ? ok() : no('stop'); }, ms); SKIPW.push(function () { clearTimeout(tm); r === RUN ? ok() : no('stop'); }); }); }
+
+/* ---------- מהירות דיבור + דילוג ---------- */
+var RATES = [0.8, 1, 1.2, 1.5], RATE = 1;
+try { var _r = parseFloat(localStorage.getItem('clock-rate')); if (RATES.indexOf(_r) >= 0) RATE = _r; } catch (e) {}
+var SKIPPING = false, SKIPW = [];   // בזמן דילוג: הקול, ההמתנות והאנימציות נגמרים מיד, עד הלחיצה הבאה של הילד
+function skipNow() {
+  SKIPPING = true; try { AU.pause(); } catch (e) {}
+  if (AU.onended) AU.onended();
+  var w = SKIPW; SKIPW = []; w.forEach(function (f) { f(); });
+}
+document.addEventListener('click', function (e) { if (!e.target.closest('#skipBtn,.rate')) SKIPPING = false; }, true);
+document.addEventListener('pointerdown', function (e) { if (!e.target.closest('#skipBtn,.rate')) SKIPPING = false; }, true);
+function paintRates() { document.querySelectorAll('.rate').forEach(function (b) { b.classList.toggle('on', +b.dataset.r === RATE); }); }
+function alive(r) { if (r !== RUN) throw 'stop'; }
+
+/* ---------- קול ---------- */
+var AU = new Audio(), lastSay = [];
+function say(keys) {
+  keys = [].concat(keys); lastSay = keys; var r = RUN;
+  return keys.reduce(function (pr, k) {
+    return pr.then(function () {
+      if (r !== RUN) throw 'stop';
+      return new Promise(function (ok) {
+        if (SKIPPING) { setTimeout(ok, 0); return; }
+        if (!VOICES[k]) { setTimeout(ok, 350 / RATE); return; }
+        var done = false, tm = null, fin = function () { if (!done) { done = true; clearTimeout(tm); AU.onended = null; ok(); } };
+        AU.onended = fin; AU.onerror = fin; AU.src = VOICES[k];
+        AU.playbackRate = RATE; AU.defaultPlaybackRate = RATE;
+        try { AU.preservesPitch = true; AU.mozPreservesPitch = true; AU.webkitPreservesPitch = true; } catch (e) {}
+        // אם הדפדפן חוסם קול (למשל כשהשיעור פתוח בתוך דף הבדיקה): עוצרים ומחכים ללחיצה אחת, ואז ממשיכים מאותו משפט
+        var start = function () { tm = setTimeout(fin, 12000 / Math.min(RATE, 1)); var pp = AU.play(); if (pp && pp.catch) pp.catch(function (er) { clearTimeout(tm); if (er && er.name === 'NotAllowedError' && !SKIPPING && r === RUN) needTap(start); else fin(); }); };
+        start();
+      });
+    });
+  }, Promise.resolve());
+}
+var TAPF = null;
+function needTap(f) { TAPF = f; document.getElementById('tapSound').hidden = false; }
+document.getElementById('tapSoundBtn').onclick = function () { document.getElementById('tapSound').hidden = true; var f = TAPF; TAPF = null; if (f) f(); };
+function stopVoice() { try { AU.pause(); } catch (e) {} }
+var actx = null;
+// הערת אבירם 18.11: בלי צלצולים (נשמע כמו שעון מעורר). נשאר רק הקול + הקונפטי
+function ding(ok) {
+  return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    var t = actx.currentTime, notes = ok ? [660, 880, 1320] : [300];
+    notes.forEach(function (f, i) { var o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = f; o.type = 'triangle'; g.gain.setValueAtTime(.18, t + i * .09); g.gain.exponentialRampToValueAtTime(.001, t + i * .09 + .35); o.connect(g); g.connect(actx.destination); o.start(t + i * .09); o.stop(t + i * .09 + .4); });
+  } catch (e) {}
+}
+function confetti() {
+  var c = document.getElementById('conf'), cols = ['#d4a537', '#f3d27a', '#2e9d5b', '#5b8def', '#e8574d', '#b06ad9'];
+  for (var i = 0; i < 40; i++) { var d = document.createElement('i'); d.className = 'cf'; d.style.left = Math.random() * 100 + 'vw'; d.style.background = cols[i % cols.length]; d.style.animationDelay = Math.random() * .4 + 's'; c.appendChild(d); }
+  setTimeout(function () { c.innerHTML = ''; }, 2300);
+}
+// בלי "בדיוק!" (p3): בשעון זה מתבלבל עם "4 בדיוק" (הערת אבירם 18.11)
+var PR = ['p1', 'p2', 'p4', 'p5'], prI = 0;
+function praiseFx() { ding(true); confetti(); var pe = document.querySelector('.peanut'); if (pe) { pe.classList.remove('bounce'); void pe.offsetWidth; pe.classList.add('bounce'); } }
+function praise() { praiseFx(); return say(PR[prI++ % PR.length]); }
+// מוזיקה רכה בזמן "להרגיש דקה": צלילים עדינים (סולם פנטטוני), נוצרת בדפדפן, בלי קובץ
+var MUS = null;
+function music(on) {
+  if (MUS) { clearInterval(MUS.iv); try { MUS.g.gain.setTargetAtTime(0, actx.currentTime, .3); } catch (e) {} MUS = null; }
+  if (!on) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.resume) actx.resume();
+    var g = actx.createGain(); g.gain.value = .9; g.connect(actx.destination);
+    var mel = [523, 659, 784, 659, 587, 784, 880, 784, 659, 523, 587, 659, 523, 440, 392, 440], k = 0, bass = [262, 220, 175, 196];
+    var note = function (f, t, len, vol, type) { var o = actx.createOscillator(), e = actx.createGain(); o.type = type || 'sine'; o.frequency.value = f; e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(vol, t + .06); e.gain.exponentialRampToValueAtTime(.001, t + len); o.connect(e); e.connect(g); o.start(t); o.stop(t + len + .05); };
+    var tick = function () { var t = actx.currentTime + .05; note(mel[k % mel.length], t, 1.1, .07, 'triangle'); if (k % 4 === 0) note(bass[(k / 4) % 4], t, 2.6, .05); k++; };
+    tick(); MUS = { g: g, iv: setInterval(tick, 600) };
+  } catch (e) {}
+}
+
+/* ---------- השעון ---------- */
+// h = מקום מחוג השעות בשעות (0-12, למשל 4.5 = באמצע בין 4 ל-5)
+function Clock(el, o) {
+  o = o || {};
+  var NS = 'http://www.w3.org/2000/svg', R = 150, C = 170;
+  var svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 340 340');
+  function mk(t, a, p) { var e = document.createElementNS(NS, t); for (var k in a) e.setAttribute(k, a[k]); (p || svg).appendChild(e); return e; }
+  function pt(h, r) { var a = (h / 12) * 2 * Math.PI; return [C + r * Math.sin(a), C - r * Math.cos(a)]; }
+  mk('circle', { cx: C, cy: C, r: R + 12, fill: '#1b2a4a' });
+  mk('circle', { cx: C, cy: C, r: R, fill: '#fffdf6' });
+  var arc = mk('path', { fill: 'rgba(212,165,55,.38)', d: '' });
+  for (var i = 1; i <= 12; i++) { var a = pt(i, R - 6), b = pt(i, R - 20); mk('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: '#1b2a4a', 'stroke-width': 5, 'stroke-linecap': 'round' }); }
+  var nums = [];
+  for (var n = 1; n <= 12; n++) {
+    var q = pt(n, R - 46), g = mk('g', { 'data-n': n, style: 'cursor:pointer' });
+    var bg = mk('circle', { cx: q[0], cy: q[1], r: 24, fill: 'transparent' }, g);
+    var tx = mk('text', { x: q[0], y: q[1] + 12, 'text-anchor': 'middle', 'font-size': 34, 'font-weight': 900, fill: '#1b2a4a', 'font-family': 'Rubik,Arial' }, g);
+    tx.textContent = n; nums.push({ g: g, bg: bg, tx: tx });
+  }
+  // מחוג ארוך (דקות) - רק כשמבקשים שעון "אמיתי" עם שני מחוגים (שלב המילים)
+  var mhand = null;
+  if (o.two) { mhand = mk('g', {}); mk('line', { x1: C, y1: C + 18, x2: C, y2: C - 122, stroke: '#2f6fd6', 'stroke-width': 7, 'stroke-linecap': 'round' }, mhand); }
+  var hand = mk('g', {});
+  mk('line', { x1: C, y1: C + 16, x2: C, y2: C - 78, stroke: '#1b2a4a', 'stroke-width': 13, 'stroke-linecap': 'round' }, hand);
+  mk('path', { d: 'M' + (C - 15) + ' ' + (C - 72) + ' L' + C + ' ' + (C - 100) + ' L' + (C + 15) + ' ' + (C - 72) + ' Z', fill: '#d4a537', stroke: '#1b2a4a', 'stroke-width': 3, 'stroke-linejoin': 'round' }, hand);
+  mk('circle', { cx: C, cy: C, r: 12, fill: '#d4a537', stroke: '#1b2a4a', 'stroke-width': 4 });
+  el.appendChild(svg);
+  var api = { h: o.h == null ? 12 : o.h, svg: svg };
+  api.set = function (h) { api.h = ((h % 12) + 12) % 12; hand.setAttribute('transform', 'rotate(' + (api.h * 30) + ' ' + C + ' ' + C + ')'); if (mhand) mhand.setAttribute('transform', 'rotate(' + ((h - Math.floor(h)) * 360) + ' ' + C + ' ' + C + ')'); };
+  api.handVisible = function (v) { hand.style.display = v ? '' : 'none'; if (mhand) mhand.style.display = v ? '' : 'none'; };
+  api.showNums = function (k) { nums.forEach(function (x, i) { x.g.style.opacity = i < k ? 1 : 0; }); };
+  api.mark = function (n, col) { nums.forEach(function (x, i) { var on = i + 1 === n; x.bg.setAttribute('fill', on ? (col || '#f3d27a') : 'transparent'); }); };
+  api.arc = function (h1, h2) {
+    if (h1 == null) { arc.setAttribute('d', ''); return; }
+    var a = pt(h1, R), b = pt(h2, R), big = (h2 - h1) > 6 ? 1 : 0;
+    arc.setAttribute('d', 'M' + C + ' ' + C + ' L' + a[0] + ' ' + a[1] + ' A' + R + ' ' + R + ' 0 ' + big + ' 1 ' + b[0] + ' ' + b[1] + ' Z');
+  };
+  api.onNum = function (f) { nums.forEach(function (x, i) { x.g.onclick = function () { f(i + 1); }; }); };
+  // תנועה רציפה (setInterval ולא requestAnimationFrame, כדי שזה יעבוד גם ברקע)
+  api.go = function (to, ms) {
+    var r = RUN, from = api.h, t0 = Date.now();
+    if (to < from - 0.001 && to + 12 - from < 6) to += 12;
+    return new Promise(function (ok, no) {
+      var iv = setInterval(function () {
+        if (r !== RUN) { clearInterval(iv); no('stop'); return; }
+        var k = SKIPPING ? 1 : Math.min(1, (Date.now() - t0) / ms); api.set(from + (to - from) * k);
+        if (k >= 1) { clearInterval(iv); ok(); }
+      }, 30);
+    });
+  };
+  // גרירה: מסובבים את המחוג באצבע
+  api.draggable = function (onChange) {
+    var drag = false;
+    function at(e) {
+      var rc = svg.getBoundingClientRect(), x = (e.clientX - rc.left) / rc.width * 340 - C, y = (e.clientY - rc.top) / rc.height * 340 - C;
+      var h = Math.atan2(x, -y) / (2 * Math.PI) * 12; if (h < 0) h += 12;
+      var near = Math.round(h); if (Math.abs(h - near) < 0.13) h = near;       // נצמד למספר כשמתקרבים אליו
+      api.set(h); onChange && onChange(api.h);
+    }
+    svg.addEventListener('pointerdown', function (e) { drag = true; try { svg.setPointerCapture(e.pointerId); } catch (x) {} at(e); });
+    svg.addEventListener('pointermove', function (e) { if (drag) at(e); });
+    svg.addEventListener('pointerup', function () { drag = false; });
+    svg.addEventListener('pointercancel', function () { drag = false; });
+  };
+  api.set(api.h);
+  return api;
+}
+// מחזיר את המספר שהמחוג כבר עבר (12 במקום 0)
+function hourOf(h) { var n = Math.floor(h + 1e-6) % 12; return n === 0 ? 12 : n; }
+function isExact(h) { return Math.abs(h - Math.round(h)) < 0.02; }
+function wrap(n) { return ((n - 1) % 12 + 12) % 12 + 1; }
+// שק ערבוב: כל המספרים לפני שחוזרים, ואף פעם לא אותו מספר פעמיים ברצף
+function Bag() { var b = [], last = 0; return function () { if (!b.length) { b = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].sort(function () { return Math.random() - .5; }); if (b[b.length - 1] === last) b.unshift(b.pop()); } last = b.pop(); return last; }; }
+function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+/* ---------- מסכים ---------- */
+var backTo = null;
+var backBtn = document.getElementById('backBtn');
+document.querySelectorAll('.rate').forEach(function (b) { b.onclick = function () { RATE = +b.dataset.r; try { localStorage.setItem('clock-rate', RATE); } catch (e) {} AU.playbackRate = RATE; paintRates(); }; });
+paintRates();
+document.getElementById('skipBtn').onclick = skipNow;
+backBtn.onclick = function () { stopVoice(); if (backTo) backTo(); };
+function setBack(label, fn) { backBtn.textContent = label; backTo = fn; backBtn.hidden = false; }
+function screen(html) { RUN++; stopVoice(); music(false); document.getElementById('tapSound').hidden = true; $app.className = ''; $app.innerHTML = html; window.scrollTo(0, 0); return RUN; }
+function peanutImg() { return PEANUT.indexOf('data:') === 0 ? '<img class="peanut" src="' + PEANUT + '" alt="">' : '<div class="peanut" style="font-size:70px;line-height:92px">🥜</div>'; }
+function genBack() { if (window.opener && !window.opener.closed) { setBack('→ חזרה למחולל', function () { try { window.opener.focus(); } catch (e) {} window.close(); }); return true; } return false; }
+
+function intro() {
+  var r = screen('<div class="card"><div class="hello">' + peanutImg() + '<div><h1>' + (WHO ? 'שלום ' + WHO + '! 👋' : 'שלום! 👋') + '</h1><div class="sub">היום ' + gx('אתה לומד', 'את לומדת', 'לומדים') + ' לקרוא שעון 🕐</div></div></div>' +
+    (CFG.who ? '' : '<div class="sub">איך קוראים לך?</div><input class="name" id="nm" placeholder="השם שלך" value=""><div class="gender"><button class="btn sec" data-g="m">בן</button><button class="btn sec" data-g="f">בת</button></div>') +
+    '<div class="row"><button class="btn" id="go">🚀 מתחילים</button></div></div>');
+  if (!genBack()) setBack('→ חזרה', intro);
+  var nm = document.getElementById('nm');
+  if (nm) { nm.value = P.name || ''; if (P.g) G = P.g; document.querySelectorAll('[data-g]').forEach(function (b) { if (b.dataset.g === G) b.classList.add('on'); b.onclick = function () { G = b.dataset.g; P.g = G; save(P); document.querySelectorAll('[data-g]').forEach(function (x) { x.classList.toggle('on', x === b); }); }; }); }
+  document.getElementById('go').onclick = function () { if (nm) { WHO = nm.value.trim(); P.name = WHO; save(P); } ding(true); map(P.lastL || 0); };
+}
+
+function setLesson(l) { CUR = l; STAGES = LESSONS[l].stages; if (P.lastL !== l) { P.lastL = l; save(P); } }
+function map(l) {
+  if (l != null) setLesson(l);
+  var tabs = '<div class="ltabs">' + LESSONS.map(function (L, k) { var all = L.stages.every(function (s, i) { return P.done[dkey(i, k)]; }); return '<button class="ltab' + (k === CUR ? ' on' : '') + '" data-l="' + k + '">' + (all ? '✓ ' : '') + 'שיעור ' + (k + 1) + '<small>' + L.name + '</small></button>'; }).join('') + '</div>';
+  var nxL = LESSONS[CUR + 1];
+  var r = screen('<div class="card">' + tabs + '<div class="hello">' + peanutImg() + '<div><h2>שיעור ' + (CUR + 1) + ': ' + LESSONS[CUR].name + '</h2><div class="sub">כל שלב בנוי על הקודם. ' + gx('בחר', 'בחרי', 'בוחרים') + ' שלב:</div></div></div>' +
+    '<div class="stages">' + STAGES.map(function (s, i) { var dn = P.done[dkey(i)]; return '<div class="stage' + (dn ? ' done' : '') + '" data-i="' + i + '"><div class="n">' + (dn ? '✓' : i + 1) + '</div><div>' + s.name + '<small>' + s.d.replace('את/ה', gx('אתה', 'את', 'את/ה')) + '</small></div></div>'; }).join('') + '</div>' +
+    (nxL ? '<div class="tip">🔜 בשיעור הבא: ' + nxL.name + '</div>' : '<div class="tip">🏆 זה השיעור האחרון של השעון</div>') + '</div>');
+  if (!genBack()) setBack('→ חזרה לפתיחה', intro);
+  document.querySelectorAll('.stage').forEach(function (el) { el.onclick = function () { openStage(+el.dataset.i); }; });
+  document.querySelectorAll('.ltab').forEach(function (el) { el.onclick = function () { map(+el.dataset.l); }; });
+  var gk = 'greeted' + (CUR || '');
+  if (!P[gk]) { P[gk] = 1; save(P); say(LESSONS[CUR].hi).catch(function () {}); }
+}
+var FN = [];   // ממולא למטה: הפונקציות של כל שלב בכל שיעור
+function openStage(i, l) {
+  if (l != null) setLesson(l);
+  setBack('→ חזרה לכל השלבים', function () { map(); });
+  try { if (window.parent !== window) window.parent.postMessage({ clockAt: [CUR + 1, i + 1] }, '*'); } catch (e) {}
+  FN[CUR][i](i);
+}
+function finish(i, extra) {
+  P.done[dkey(i)] = 1; save(P);
+  var nx = STAGES[i + 1], nxL = !nx && LESSONS[CUR + 1], last = !nx && !nxL;
+  if (!nx) extra = LESSONS[CUR].done;
+  var r = screen('<div class="card">' + peanutImg() + '<h2>🎉 ' + gx('סיימת', 'סיימת', 'סיימתם') + ' את השלב: ' + STAGES[i].name + '</h2>' +
+    (!nx ? '<div class="tip" style="font-size:22px">🏅 ' + (last ? 'סיימת את כל שיעורי השעון!' : 'סיימת את שיעור ' + (CUR + 1) + '!') + '</div>' : '') +
+    '<div class="row">' + (nx ? '<button class="btn" id="nx">לשלב הבא: ' + nx.name + ' ←</button>' : nxL ? '<button class="btn" id="nl">לשיעור ' + (CUR + 2) + ': ' + nxL.name + ' ←</button>' : '') + '<button class="btn sec" id="again">עוד פעם את השלב הזה</button><button class="btn sec" id="mp">לכל השלבים</button></div></div>');
+  guard(praise().then(function () { if (extra) return say(extra); }));
+  if (nx) document.getElementById('nx').onclick = function () { openStage(i + 1); };
+  if (nxL) document.getElementById('nl').onclick = function () { map(CUR + 1); };
+  document.getElementById('again').onclick = function () { openStage(i); };
+  document.getElementById('mp').onclick = function () { map(); };
+}
+function head(i, extra) { return '<div class="sub" style="margin:0">שלב ' + (i + 1) + ' מתוך ' + STAGES.length + '</div><h2>' + STAGES[i].name + '</h2>' + (extra || ''); }
+function guard(p) { return p.catch(function (e) { if (e !== 'stop') console.error(e); }); }
+
+/* שלב 1: מילים, כל מילה עם המחשה */
+function sWords(i) {
+  // הערות אבירם 18.11: שעון אמיתי עם שני מחוגים, הגדרות גדולות + אפשרות לניקוד, "רוצים להרגיש...?" כשאלה, מוזיקה בזמן הדקה, וסיום "למדנו את המילים"
+  var cards = [
+    { w: 'שעון', wn: 'שָׁעוֹן', t: 'השעון מראה לנו מה השעה עכשיו', tn: 'הַשָּׁעוֹן מַרְאֶה לָנוּ מָה הַשָּׁעָה עַכְשָׁיו', v: 'wClock', h: 3 },
+    { w: 'מחוג', wn: 'מָחוֹג', t: 'לשעון יש שני מחוגים: מחוג קצר ומחוג ארוך.<br>כל מחוג הוא כמו חץ שמצביע על מספר.<br>קודם נלמד את המחוג הקצר, של השעות', tn: 'לַשָּׁעוֹן יֵשׁ שְׁנֵי מְחוֹגִים: מָחוֹג קָצָר וּמָחוֹג אָרֹךְ.<br>כָּל מָחוֹג הוּא כְּמוֹ חֵץ שֶׁמַּצְבִּיעַ עַל מִסְפָּר.<br>קֹדֶם נִלְמַד אֶת הַמָּחוֹג הַקָּצָר, שֶׁל הַשָּׁעוֹת', v: ['wHand', 'wHands'], h: 2, pulse: 1 },
+    { w: 'שעה', wn: 'שָׁעָה', t: 'זמן ארוך: כמו שיעור בבית הספר + ההפסקה.<br>בשעון: המחוג הקצר עובר ממספר אחד למספר הבא', tn: 'זְמַן אָרֹךְ: כְּמוֹ שִׁעוּר בְּבֵית הַסֵּפֶר + הַהַפְסָקָה.<br>בַּשָּׁעוֹן: הַמָּחוֹג הַקָּצָר עוֹבֵר מִמִּסְפָּר אֶחָד לַמִּסְפָּר הַבָּא', v: 'wHour', h: 4, move: 1 },
+    { w: 'דקה', wn: 'דַּקָּה', t: 'זמן קצר: כמו לספור לאט עד 60', tn: 'זְמַן קָצָר: כְּמוֹ לִסְפֹּר לְאַט עַד 60', v: ['wMin', 'wFeel'], h: 4, feel: 1 }
+  ], k = 0;
+  function show() {
+    var c = cards[k], nq = !!P.nq, r = screen('<div class="card">' + head(i) + '<div class="label gold" style="font-size:38px">' + (nq ? c.wn : c.w) + '</div><div class="clockwrap" id="ck"></div><div class="def">' + (nq ? c.tn : c.t) + '</div>' +
+      '<button class="btn sec small" id="nqBtn">' + (nq ? 'בלי ניקוד' : 'אֲ עם ניקוד') + '</button>' +
+      (c.feel ? '<div id="feelBox"><button class="btn sec" id="feel">⏱️ רוצים להרגיש כמה זה דקה?</button></div>' : '') +
+      '<button class="replay" id="rp">🔊 לשמוע שוב</button><div class="row">' + (k ? '<button class="btn sec" id="pv">→ למילה הקודמת</button>' : '') + '<button class="btn" id="nx">' + (k < cards.length - 1 ? 'למילה הבאה ←' : 'סיימתי ←') + '</button></div></div>');
+    var ck = Clock(document.getElementById('ck'), { h: c.h, two: 1 });
+    document.getElementById('nqBtn').onclick = function () { P.nq = !P.nq; save(P); var q = P.nq; document.querySelector('.card .label.gold').textContent = q ? c.wn : c.w; document.querySelector('.card .def').innerHTML = q ? c.tn : c.t; this.textContent = q ? 'בלי ניקוד' : 'אֲ עם ניקוד'; };
+    function play() {
+      var r2 = RUN;
+      guard(say(c.v).then(function () {
+        if (c.move) { ck.set(4); ck.arc(4, 4.001); var iv = setInterval(function () { if (r2 !== RUN) return clearInterval(iv); ck.arc(4, Math.max(4.001, ck.h)); }, 40); return ck.go(5, 4200).then(function () { clearInterval(iv); }); }
+      }));
+      if (c.pulse) { var on = 0, iv2 = setInterval(function () { if (r2 !== RUN) return clearInterval(iv2); ck.mark(on++ % 2 ? 2 : 0); }, 500); }
+    }
+    play();
+    document.getElementById('rp').onclick = function () { RUN++; var r3 = RUN; play(); };
+    if (c.feel) document.getElementById('feel').onclick = function () {
+      var box = document.getElementById('feelBox'), t0 = Date.now(), r4 = RUN;
+      box.innerHTML = '<div class="big" id="sec">0 שניות</div><div class="minbar"><i id="mb"></i></div><button class="btn sec small" id="stopF">✕ לעצור</button>';
+      stopVoice(); music(true); guard(say('wFeelGo'));
+      var iv = setInterval(function () {
+        if (r4 !== RUN) { music(false); return clearInterval(iv); }
+        var s = Math.min(60, Math.floor((Date.now() - t0) / 1000)); document.getElementById('sec').textContent = s + ' שניות'; document.getElementById('mb').style.width = (s / 60 * 100) + '%';
+        if (s >= 60) { clearInterval(iv); music(false); box.innerHTML = '<div class="big">🎉 זאת הייתה דקה אחת!</div>'; guard(say('wFeelEnd')); confetti(); }
+      }, 250);
+      document.getElementById('stopF').onclick = function () { clearInterval(iv); music(false); show(); };
+    };
+    if (k) document.getElementById('pv').onclick = function () { k--; show(); };
+    document.getElementById('nx').onclick = function () {
+      if (k < cards.length - 1) { k++; show(); return; }
+      // סיום שלב המילים: "כל הכבוד! למדנו את המילים החשובות לשעון!"
+      screen('<div class="card">' + peanutImg() + '<h2>🎉 כל הכבוד!</h2><div class="def">למדנו את המילים החשובות לשעון!</div><div class="row"><button class="btn" id="wd">ממשיכים ←</button></div></div>');
+      praiseFx(); var go = function () { finish(i); };
+      document.getElementById('wd').onclick = go;
+      guard(say('wordsDone').then(function () { return wait(700); }).then(go));
+    };
+  }
+  show();
+}
+
+/* שלב 2: המספרים בשעון + למצוא מספר */
+function sFace(i) {
+  var r = screen('<div class="card">' + head(i) + '<div class="clockwrap" id="ck"></div><div class="big" id="say"></div><div class="dots" id="dots"></div><div class="row" id="ctl"></div><button class="replay" id="rp">🔊 לשמוע שוב</button></div>');
+  var ck = Clock(document.getElementById('ck'), { h: 0 }); ck.handVisible(false); ck.showNums(0);
+  var $s = document.getElementById('say'), $ctl = document.getElementById('ctl');
+  document.getElementById('rp').onclick = function () { guard(say(lastSay)); };
+  guard((async function () {
+    await say('face1');
+    for (var n = 1; n <= 12; n++) { alive(r); ck.showNums(n); ck.mark(n); $s.textContent = n; await say('n' + n); }
+    ck.mark(0); $s.textContent = '12 ← 1 ← 2 ...';
+    ck.handVisible(true); ck.set(10); var g = ck.go(14, 3600); await say('face2'); await g; ck.handVisible(false);
+    $ctl.innerHTML = '<button class="btn" id="st">עכשיו ' + gx('אתה', 'את', 'אתם') + ': למצוא מספרים ←</button>';
+    document.getElementById('st').onclick = findGame;
+  })());
+  function findGame() {
+    var bag = Bag(), got = 0, NEED = 5, r2 = ++RUN; $ctl.innerHTML = '';
+    var dots = document.getElementById('dots'); dots.innerHTML = Array(NEED + 1).join('<div class="dot"></div>');
+    function ask() {
+      var t = bag(); $s.textContent = 'איפה המספר ' + t + '?'; ck.mark(0); guard(say(['findQ', 'n' + t]));
+      ck.onNum(function (n) {
+        if (n === t) { ck.mark(n, '#9fe0b6'); dots.children[got++].className = 'dot on'; ck.onNum(function () {}); guard(praise().then(function () { return got >= NEED ? finish(i) : (ask(), 0); })); }
+        else { ding(false); ck.mark(t, '#f3d27a'); $s.textContent = 'זה ' + n + '. המספר ' + t + ' כאן ✨'; }
+      });
+    }
+    ask();
+  }
+}
+
+/* שאלת קריאה: מה השעה? (בדיוק / ומשהו) */
+function readQ(h, done) {
+  var n = hourOf(h), ex = isExact(h), o;
+  if (ex) o = [n + ' בדיוק', n + ' ומשהו', wrap(n + 1) + ' בדיוק', wrap(n - 1) + ' בדיוק'];
+  else o = [n + ' ומשהו', wrap(n + 1) + ' ומשהו', n + ' בדיוק', wrap(n - 1) + ' ומשהו'];
+  return { ans: o[0], opts: shuffle(o.slice()), n: n, ex: ex, trap: !ex && (h - Math.floor(h)) > 0.75 };
+}
+function readStage(i, cfg) {
+  // cfg: { count, gen() -> h , intro }
+  var r = screen('<div class="card">' + head(i) + '<div class="clockwrap" id="ck"></div><div class="big" id="say">מה השעה?</div><div class="opts" id="opts"></div><div class="dots" id="dots"></div><div id="msg"></div><button class="replay" id="rp">🔊 לשמוע שוב</button></div>');
+  var ck = Clock(document.getElementById('ck'), { h: 12 }), got = 0, $o = document.getElementById('opts'), $m = document.getElementById('msg'), last = '';
+  var dots = document.getElementById('dots'); dots.innerHTML = Array(cfg.count + 1).join('<div class="dot"></div>');
+  document.getElementById('rp').onclick = function () { guard(say(lastSay)); };
+  function ask() {
+    var h, q; do { h = cfg.gen(got); q = readQ(h); } while (q.ans === last); last = q.ans;
+    ck.set(h); ck.arc(null); $m.innerHTML = ''; var first = true, t0 = Date.now();
+    guard(say('whatT'));
+    $o.innerHTML = q.opts.map(function (x) { return '<button class="opt">' + x + '</button>'; }).join('');
+    [].forEach.call($o.children, function (b) {
+      b.onclick = function () {
+        if (b.textContent === q.ans) {
+          b.classList.add('good'); [].forEach.call($o.children, function (x) { x.disabled = true; });
+          if (first) dots.children[got].className = 'dot on'; got += first ? 1 : 0;
+          // "ומשהו": פשוט "נכון! 7 ומשהו" (בלי "בדיוק!"). "בדיוק": מהדוגמה השנייה לפעמים גם "השעה 4" בלי המילה בדיוק
+          var ansP = q.ex ? (praise().then(function () { return say((got >= 2 && got % 2 === 0 ? 'hp' : 'h') + q.n); })) : (praiseFx(), say(['p5', 's' + q.n]));
+          guard(ansP.then(function () { return wait(400); }).then(function () { got >= cfg.count ? finish(i) : ask(); }));
+        } else {
+          first = false; ding(false); b.classList.add('bad'); b.disabled = true;
+          var trapHit = q.trap && b.textContent === wrap(q.n + 1) + ' ומשהו';
+          var nearEx = !q.ex && b.textContent === q.n + ' בדיוק';
+          if (!q.ex) ck.arc(Math.floor(h), Math.floor(h) + 1); ck.mark(q.n, '#f3d27a');
+          $m.innerHTML = '<div class="tip">' + (trapHit ? '👀 המחוג עוד <b>לא הגיע</b> ל-' + wrap(q.n + 1) + '. הוא כבר עבר את ' + q.n + ', אז השעה עדיין ' + q.n + ' ומשהו.'
+            : nearEx ? '👀 המחוג לא בדיוק על ' + q.n + ', הוא כבר זז הלאה. אז השעה ' + q.n + ' ומשהו.'
+            : q.ex ? '👀 המחוג מצביע בדיוק על ' + q.n + '.' : '👀 מסתכלים על המספר שהמחוג כבר עבר: ' + q.n + '.') + '</div>';
+          guard(say(trapHit ? 'trap' : 'wrong'));
+        }
+      };
+    });
+  }
+  guard((cfg.intro ? cfg.intro(ck) : Promise.resolve()).then(ask));
+}
+
+/* שלב 3: המחוג הקצר בדיוק על מספר */
+function sExact(i) {
+  var bag = Bag();
+  readStage(i, {
+    count: 6, gen: function () { return bag() % 12; },
+    intro: function (ck) {
+      var o = document.getElementById('opts'), s = document.getElementById('say');
+      s.innerHTML = '<span class="label">4 בדיוק</span>'; ck.set(4); ck.mark(4);
+      return say(['small1', 'small2']).then(function () { s.textContent = 'מה השעה?'; ck.mark(0); });
+    }
+  });
+}
+
+/* שלב 4: הזמן עובר, 4 בדיוק -> 4 וקצת -> כמעט 5 -> 5 בדיוק */
+function sMove(i) {
+  var r = screen('<div class="card">' + head(i) + '<div class="clockwrap" id="ck"></div><div id="lab"><span class="label">4 בדיוק</span></div><div class="row" id="ctl"></div></div>');
+  var ck = Clock(document.getElementById('ck'), { h: 4 }), $l = document.getElementById('lab'), $c = document.getElementById('ctl');
+  function L(t, gold) { $l.innerHTML = '<span class="label' + (gold ? ' gold' : '') + '">' + t + '</span>'; }
+  function arcTo() { ck.arc(4, Math.max(4.001, Math.min(ck.h, 5))); }
+  function run() {
+    RUN++; var r2 = RUN; $c.innerHTML = ''; ck.set(4); ck.arc(null); L('4 בדיוק'); ck.mark(4);
+    var iv = setInterval(function () { if (r2 !== RUN) return clearInterval(iv); if (ck.h > 4) arcTo(); }, 40);
+    guard((async function () {
+      await say(['mv1', 'h4']);
+      L('4 בדיוק = פשוט 4', true); await say('justN'); ck.mark(0);
+      var g = ck.go(4.25, 2600); await say('mv2'); await g;
+      L('4 וקצת'); await say('mv3');
+      await ck.go(4.5, 2400); L('4 ומשהו'); await say('mv4');
+      await ck.go(4.9, 2600); L('כמעט 5... עדיין 4 ומשהו', true); ck.mark(5, '#fde2df'); await say('mv5'); ck.mark(0);
+      await ck.go(5, 1600); L('5 בדיוק'); ck.mark(5); ck.arc(4, 5); await say('mv6');
+      L('בין 4 ל-5 = 4 ומשהו', true); await say('mvRule'); clearInterval(iv);
+      $c.innerHTML = '<button class="btn" id="you">עכשיו ' + gx('אתה', 'את', 'אתם') + ' ←</button><button class="btn sec" id="again">▶ לראות שוב</button>';
+    })());
+  }
+  // הערת אבירם 18.11: אחרי ההדגמה, הילד עונה בעצמו "מה השעה שהמחוג מראה?" (ולא רק חוזר אחרי הקול)
+  var QS = [
+    { h: 4.3, a: '4 ומשהו', o: ['4 ומשהו', '4 בדיוק', '5 בדיוק'], v: ['p5', 's4'] },
+    { h: 4.9, a: '4 ומשהו', o: ['5 ומשהו', '4 ומשהו', '5 בדיוק'], v: ['p5', 's4'], trap: 1 },
+    { h: 5, a: '5 בדיוק', o: ['4 ומשהו', '5 בדיוק', '5 ומשהו'], v: ['p5', 'hp5'] }
+  ];
+  function quiz() {
+    RUN++; var qi = 0; ck.arc(null); ck.mark(0);
+    $c.innerHTML = '<div class="opts" id="mo" style="width:100%"></div><div id="mm" style="width:100%"></div>';
+    function ask() {
+      var q = QS[qi], $o = document.getElementById('mo'), $m = document.getElementById('mm');
+      ck.set(4); L('?'); $m.innerHTML = ''; $o.innerHTML = '';
+      guard(ck.go(q.h, 1800).then(function () {
+        $o.innerHTML = q.o.map(function (x) { return '<button class="opt">' + x + '</button>'; }).join('');
+        [].forEach.call($o.children, function (b) {
+          b.onclick = function () {
+            if (b.textContent === q.a) {
+              b.classList.add('good'); [].forEach.call($o.children, function (x) { x.disabled = true; }); L(q.a); praiseFx();
+              guard(say(q.v).then(function () { return wait(500); }).then(function () { qi++; qi >= QS.length ? finish(i) : ask(); }));
+            } else {
+              ding(false); b.classList.add('bad'); b.disabled = true; ck.mark(Math.floor(q.h + 1e-6), '#f3d27a');
+              $m.innerHTML = '<div class="tip">' + (q.trap ? '👀 המחוג עוד <b>לא הגיע</b> ל-5. הוא כבר עבר את 4, אז השעה עדיין 4 ומשהו.' : q.h === 5 ? '👀 המחוג מצביע בדיוק על 5.' : '👀 המחוג כבר עבר את 4, אבל עוד לא הגיע ל-5.') + '</div>';
+              guard(say(q.trap ? 'trap' : 'wrong'));
+            }
+          };
+        });
+        return say('youNow');
+      }));
+    }
+    ask();
+  }
+  $c.addEventListener('click', function (e) {
+    if (e.target.id === 'again') run();
+    if (e.target.id === 'you') quiz();
+  });
+  run();
+}
+
+/* שלב 5: "4 ומשהו" עם מלכודת "כמעט" */
+function sSome(i) {
+  var bag = Bag();
+  readStage(i, {
+    count: 8,
+    gen: function (k) {
+      var n = bag() % 12, kind = k % 4;                 // 0,2 רגיל, 1 מלכודת כמעט, 3 בדיוק
+      var f = kind === 3 ? 0 : kind === 1 ? 0.8 + Math.random() * 0.13 : 0.15 + Math.random() * 0.55;
+      return n + f;
+    }
+  });
+}
+
+/* שלב 6: הילד מזיז את המחוג */
+function dragStage(i, count, onWin) {
+  var r = screen('<div class="card">' + head(i) + '<div class="big" id="say"></div><div class="clockwrap" id="ck"></div><div class="dots" id="dots"></div><div id="msg"></div><div class="row"><button class="btn" id="chk">✓ ' + gx('בדוק', 'בדקי', 'בודקים') + '</button></div><button class="replay" id="rp">🔊 לשמוע שוב</button></div>');
+  var ck = Clock(document.getElementById('ck'), { h: 12 }), bag = Bag(), got = 0, tg, first;
+  var dots = document.getElementById('dots'); dots.innerHTML = Array(count + 1).join('<div class="dot"></div>');
+  var $s = document.getElementById('say'), $m = document.getElementById('msg');
+  ck.draggable(function () { $m.innerHTML = ''; ck.arc(null); });
+  document.getElementById('rp').onclick = function () { guard(say(lastSay)); };
+  function ask() {
+    var n = bag(), ex = got % 3 === 1; tg = { n: n, ex: ex }; first = true;
+    ck.set(wrap(n + 5) % 12 + 0.4); ck.arc(null); ck.mark(0); $m.innerHTML = '';
+    $s.innerHTML = 'הזיזו את המחוג ל: <span class="label gold">' + n + (ex ? ' בדיוק' : ' ומשהו') + '</span>';
+    guard(say(got === 0 && !P.dragHi ? ['drag1', 'dragQ', (ex ? 'h' : 's') + n] : ['dragQ', (ex ? 'h' : 's') + n])); P.dragHi = 1;
+  }
+  var busy = false;   // לחיצה כפולה על "בודקים" בזמן השבח לא סופרת פעמיים
+  document.getElementById('chk').onclick = function () {
+    if (busy) return;
+    var h = ck.h, n = tg.n % 12, ok;
+    if (tg.ex) ok = isExact(h) && Math.round(h) % 12 === n;
+    else { var d = ((h - n) % 12 + 12) % 12; ok = d > 0.05 && d < 0.97; }
+    if (ok) {
+      busy = true;
+      if (first) { dots.children[got].className = 'dot on'; got++; }
+      guard(praise().then(function () { return wait(300); }).then(function () { busy = false; got >= count ? (onWin ? onWin() : finish(i)) : ask(); }));
+    } else {
+      first = false; ding(false); ck.mark(tg.n, '#f3d27a');
+      if (!tg.ex) ck.arc(n, n + 1);
+      $m.innerHTML = '<div class="tip">' + (tg.ex ? '👀 המחוג צריך להצביע <b>בדיוק</b> על ' + tg.n + '.' : '👀 "' + tg.n + ' ומשהו" = המחוג אחרי ' + tg.n + ', אבל לפני ' + wrap(tg.n + 1) + ' (באזור הצהוב).') + '</div>';
+      guard(say('wrong'));
+    }
+  };
+  ask();
+}
+function sDrag(i) { dragStage(i, 5); }
+
+/* שלב 7: בדיקה, 3 נכונות ברצף (קריאה + הזזה, מעורב) */
+function sCheck(i) {
+  var streak = 0, bag = Bag(), times = [];
+  var r = screen('<div class="card">' + head(i) + '<div class="big" id="say"></div><div class="clockwrap" id="ck"></div><div class="opts" id="opts"></div><div class="dots" id="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div id="msg"></div><div class="row" id="ctl"></div></div>');
+  var ck = Clock(document.getElementById('ck'), { h: 12 }), $s = document.getElementById('say'), $o = document.getElementById('opts'), $m = document.getElementById('msg'), $c = document.getElementById('ctl'), dots = document.getElementById('dots');
+  var dragOn = false; ck.draggable(function () { if (!dragOn) return; $m.innerHTML = ''; });
+  function paint() { [].forEach.call(dots.children, function (d, k) { d.className = 'dot' + (k < streak ? ' on' : ''); }); }
+  function result(ok) {
+    if (ok) { streak++; paint(); guard(praise().then(function () { return wait(300); }).then(function () { if (streak >= 3) { P.checkTimes = times; save(P); finish(i, 'done'); } else ask(); })); }
+    else { streak = 0; paint(); ding(false); guard(say('checkAgain').then(function () { return wait(500); }).then(ask)); }
+  }
+  var k = 0;
+  function ask() {
+    $m.innerHTML = ''; $o.innerHTML = ''; $c.innerHTML = ''; ck.arc(null); ck.mark(0);
+    var n = bag() % 12, kind = k++ % 3, t0 = Date.now();
+    if (kind < 2) {
+      dragOn = false; var h = kind === 0 ? (Math.random() < .5 ? n : n + 0.8 + Math.random() * .12) : n + 0.2 + Math.random() * .5;
+      var q = readQ(h); ck.set(h); $s.textContent = 'מה השעה?'; guard(say('whatT'));
+      $o.innerHTML = q.opts.map(function (x) { return '<button class="opt">' + x + '</button>'; }).join('');
+      [].forEach.call($o.children, function (b) { b.onclick = function () { [].forEach.call($o.children, function (x) { x.disabled = true; }); times.push(Date.now() - t0); b.classList.add(b.textContent === q.ans ? 'good' : 'bad'); result(b.textContent === q.ans); }; });
+    } else {
+      dragOn = true; var tn = n === 0 ? 12 : n, ex = Math.random() < .4; ck.set(wrap(tn + 5) % 12 + 0.4);
+      $s.innerHTML = 'הזיזו את המחוג ל: <span class="label gold">' + tn + (ex ? ' בדיוק' : ' ומשהו') + '</span>'; guard(say(['dragQ', (ex ? 'h' : 's') + tn]));
+      $c.innerHTML = '<button class="btn" id="chk">✓ ' + gx('בדוק', 'בדקי', 'בודקים') + '</button>';
+      document.getElementById('chk').onclick = function () {
+        var hh = ck.h, ok; times.push(Date.now() - t0);
+        if (ex) ok = isExact(hh) && Math.round(hh) % 12 === tn % 12; else { var d = ((hh - tn % 12) % 12 + 12) % 12; ok = d > 0.05 && d < 0.97; }
+        $c.innerHTML = ''; result(ok);
+      };
+    }
+  }
+  guard(say('check1').then(ask));
+}
+
+/* ===================== שיעורים 2-4: שעון הדקות, שני מחוגים, חצי ורבע ===================== */
+var BLUE = '#2f6fd6';
+function fmtM(m) { return m === 1 ? 'דקה אחת' : m === 2 ? 'שתי דקות' : m + ' דקות'; }
+function fmtT(H, m, hq) {
+  if (m === 0) return H + ' בדיוק';
+  if (hq) { if (m === 30) return H + ' וחצי'; if (m === 15) return H + ' ורבע'; if (m === 45) return 'רבע ל-' + wrap(H + 1); }
+  if (m === 1) return H + ' ודקה';
+  return H + ' ו-' + m + ' דקות';
+}
+function sayT(H, m, hq) {
+  if (m === 0) return ['h' + H];
+  if (hq) { if (m === 30) return ['hh' + H]; if (m === 15) return ['hq' + H]; if (m === 45) return ['qt' + wrap(H + 1)]; }
+  return ['n' + H, 'm' + m];
+}
+function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+function tOf(H, m) { return (H % 12) * 60 + m; }                 // t = דקות מאז 12:00
+function Hof(t) { var h = Math.floor((((Math.round(t) % 720) + 720) % 720) / 60); return h === 0 ? 12 : h; }
+function Mof(t) { return ((Math.round(t) % 60) + 60) % 60; }
+function opts4(ans, cands) { var o = [ans]; shuffle(cands.slice()).forEach(function (c) { if (o.length < 4 && o.indexOf(c) < 0) o.push(c); }); return shuffle(o); }
+function angd(a, b) { var d = Math.abs(a - b) % 60; return Math.min(d, 60 - d); }
+
+/* שעון דקות ('min') או שעון שלם עם שני מחוגים ('both'). מחוג הדקות כחול, מחוג השעות כמו בשיעור 1 */
+function Clock2(el, o) {
+  o = o || {};
+  var NS = 'http://www.w3.org/2000/svg', C = 200, R = 150, both = o.mode === 'both';
+  var svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', both ? '0 0 400 400' : '30 30 340 340');
+  function mk(t, a, p) { var e = document.createElementNS(NS, t); for (var k in a) e.setAttribute(k, a[k]); (p || svg).appendChild(e); return e; }
+  function pm(m, r) { var a = m / 60 * 2 * Math.PI; return [C + r * Math.sin(a), C - r * Math.cos(a)]; }
+  mk('circle', { cx: C, cy: C, r: R + 12, fill: '#1b2a4a' });
+  mk('circle', { cx: C, cy: C, r: R, fill: '#fffdf6' });
+  var sec = mk('path', { fill: 'rgba(212,165,55,.42)', d: '' });
+  var sec2 = mk('path', { fill: 'rgba(47,111,214,.22)', d: '' });
+  for (var k = 0; k < 60; k++) { var big = k % 5 === 0, a = pm(k, R - 5), b = pm(k, R - (big ? 22 : 13)); mk('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: big ? '#1b2a4a' : '#8a97b8', 'stroke-width': big ? 5 : 2.5, 'stroke-linecap': 'round' }); }
+  var labs = [];
+  for (var n = 1; n <= 12; n++) {
+    var q = pm(n * 5, R - 48), g = mk('g', {});
+    var bg = mk('circle', { cx: q[0], cy: q[1], r: 26, fill: 'transparent' }, g);
+    var tx = mk('text', { x: q[0], y: q[1] + (both ? 12 : 10), 'text-anchor': 'middle', 'font-size': both ? 34 : 28, 'font-weight': 900, fill: both ? '#1b2a4a' : BLUE, 'font-family': 'Rubik,Arial' }, g);
+    tx.textContent = both ? n : n * 5; labs.push({ g: g, bg: bg });
+    // שעון הדקות: למעלה כתוב 0 (ההתחלה), ומתחתיו קטן 60 (סיבוב שלם). הערת אבירם 18.11
+    if (!both && n === 12) { tx.textContent = '0'; tx.setAttribute('y', q[1] + 4); var t6 = mk('text', { x: q[0], y: q[1] + 26, 'text-anchor': 'middle', 'font-size': 16, 'font-weight': 800, fill: '#8a97b8', 'font-family': 'Rubik,Arial' }, g); t6.textContent = '60'; }
+  }
+  var outer = mk('g', {});
+  if (both) for (n = 1; n <= 12; n++) { var q2 = pm(n * 5, R + 30), t2 = mk('text', { x: q2[0], y: q2[1] + 7, 'text-anchor': 'middle', 'font-size': 19, 'font-weight': 800, fill: BLUE, 'font-family': 'Rubik,Arial' }, outer); t2.textContent = n === 12 ? '0' : n * 5; }
+  outer.style.display = 'none';
+  var hh = mk('g', {});
+  mk('line', { x1: C, y1: C + 16, x2: C, y2: C - 70, stroke: '#1b2a4a', 'stroke-width': 14, 'stroke-linecap': 'round' }, hh);
+  mk('path', { d: 'M' + (C - 15) + ' ' + (C - 66) + ' L' + C + ' ' + (C - 94) + ' L' + (C + 15) + ' ' + (C - 66) + ' Z', fill: '#d4a537', stroke: '#1b2a4a', 'stroke-width': 3, 'stroke-linejoin': 'round' }, hh);
+  var mh = mk('g', {});
+  mk('line', { x1: C, y1: C + 22, x2: C, y2: C - 120, stroke: BLUE, 'stroke-width': 7, 'stroke-linecap': 'round' }, mh);
+  mk('path', { d: 'M' + (C - 10) + ' ' + (C - 116) + ' L' + C + ' ' + (C - 138) + ' L' + (C + 10) + ' ' + (C - 116) + ' Z', fill: BLUE }, mh);
+  mk('circle', { cx: C, cy: C, r: 12, fill: '#d4a537', stroke: '#1b2a4a', 'stroke-width': 4 });
+  if (!both) hh.style.display = 'none';
+  el.appendChild(svg);
+  var api = { svg: svg, t: 0, m: 0, both: both, canDrag: false };
+  function rot(g, deg) { g.setAttribute('transform', 'rotate(' + deg + ' ' + C + ' ' + C + ')'); }
+  api.setT = function (t) { t = ((t % 720) + 720) % 720; api.t = t; api.m = t % 60; rot(mh, api.m * 6); rot(hh, t / 2); };
+  function secD(m1, m2) { if (m2 - m1 >= 59.99) return 'M' + C + ' ' + (C - R) + ' A' + R + ' ' + R + ' 0 1 1 ' + (C - 0.01) + ' ' + (C - R) + ' Z'; var a = pm(m1, R), b = pm(m2, R); return 'M' + C + ' ' + C + ' L' + a[0] + ' ' + a[1] + ' A' + R + ' ' + R + ' 0 ' + ((m2 - m1) > 30 ? 1 : 0) + ' 1 ' + b[0] + ' ' + b[1] + ' Z'; }
+  api.sector = function (m1, m2) { sec.setAttribute('d', m1 == null || !(m2 > m1) ? '' : secD(m1, m2)); };
+  api.sector2 = function (m1, m2) { sec2.setAttribute('d', m1 == null || !(m2 > m1) ? '' : secD(m1, m2)); };
+  api.mark = function (n, col) { labs.forEach(function (x, i) { x.bg.setAttribute('fill', i + 1 === n ? (col || '#f3d27a') : 'transparent'); }); };
+  api.outer = function (v) { outer.style.display = v ? '' : 'none'; };
+  api.glow = function (w, on) { (w === 'h' ? hh : mh).style.filter = on ? 'drop-shadow(0 0 6px #f3d27a) drop-shadow(0 0 10px #d4a537)' : ''; };
+  function polar(e) { var rc = svg.getBoundingClientRect(), vb = both ? 400 : 340, off = both ? 0 : 30; var x = (e.clientX - rc.left) / rc.width * vb + off - C, y = (e.clientY - rc.top) / rc.height * vb + off - C; var m = Math.atan2(x, -y) / (2 * Math.PI) * 60; if (m < 0) m += 60; return { m: m, r: Math.sqrt(x * x + y * y) }; }
+  function pick(p) { if (!both) return 'm'; var dm = angd(p.m, api.m), dh = angd(p.m, (api.t / 12) % 60); if (p.r > 102) return 'm'; return dm <= dh ? 'm' : 'h'; }
+  var tapF = null;
+  api.onHand = function (f) { tapF = f; };
+  svg.addEventListener('click', function (e) {
+    if (!tapF) return; var p = polar(e), dm = angd(p.m, api.m), dh = angd(p.m, (api.t / 12) % 60);
+    var w = p.r > 102 ? (dm < 7 ? 'm' : null) : (Math.min(dm, dh) > 8 ? null : dm <= dh ? 'm' : 'h');
+    if (w) tapF(w);
+  });
+  // גרירה: geared = כמו שעון אמיתי (מחוג הדקות מזיז גם את מחוג השעות)
+  api.draggable = function (onChange, opt) {
+    opt = opt || {}; var drag = null;
+    function move(p) {
+      if (drag === 'm') {
+        var nm = Math.round(p.m) % 60;
+        if (opt.geared) { var d = nm - Math.round(api.m); if (d > 30) d -= 60; if (d < -30) d += 60; api.setT(Math.round(api.t) + d); }
+        else api.setT(Math.floor(api.t / 60) * 60 + nm);
+      } else {
+        var Hn = Math.round(p.m / 5 - api.m / 60); Hn = ((Hn % 12) + 12) % 12; api.setT(Hn * 60 + Math.round(api.m));
+      }
+      onChange && onChange(drag);
+    }
+    svg.addEventListener('pointerdown', function (e) { if (!api.canDrag) return; var p = polar(e); drag = pick(p); try { svg.setPointerCapture(e.pointerId); } catch (x) {} move(p); });
+    svg.addEventListener('pointermove', function (e) { if (drag && api.canDrag) move(polar(e)); });
+    svg.addEventListener('pointerup', function () { drag = null; });
+    svg.addEventListener('pointercancel', function () { drag = null; });
+  };
+  api.setT(o.t || 0);
+  return api;
+}
+
+/* פריסות: 'two' = שעון שעות + שעון דקות זה ליד זה, 'min' = רק שעון דקות, 'one' = שעון אחד עם שני מחוגים */
+function mkClocks(layout, t0) {
+  var box = document.getElementById('clk'), cs = { layout: layout, t: 0 };
+  if (layout === 'two') {
+    box.innerHTML = '<div class="twoclk"><div><div class="clockwrap" id="ckh"></div><div class="cap h">שעון השעות</div></div><div><div class="clockwrap" id="ckm"></div><div class="cap m">שעון הדקות</div></div></div>';
+    cs.hc = Clock(document.getElementById('ckh'), { h: 4 }); cs.mc = Clock2(document.getElementById('ckm'), { mode: 'min' });
+    cs.set = function (t) { cs.t = t; cs.hc.set(t / 60); cs.mc.setT(((t % 60) + 60) % 60); };
+    cs.sync = function () { cs.t = Math.floor(Math.round(cs.t) / 60) * 60 + Mof(cs.mc.t); cs.hc.set(cs.t / 60); };
+    cs.dc = cs.mc;
+  } else if (layout === 'min') {
+    box.innerHTML = '<div class="clockwrap" id="ckm"></div><div class="cap m">שעון הדקות</div>';
+    cs.mc = Clock2(document.getElementById('ckm'), { mode: 'min' });
+    cs.set = function (t) { cs.t = t; cs.mc.setT(t); };
+    cs.sync = function () { cs.t = Mof(cs.mc.t); };
+    cs.dc = cs.mc;
+  } else {
+    box.innerHTML = '<div class="clockwrap big1" id="ckb"></div>';
+    cs.c = Clock2(document.getElementById('ckb'), { mode: 'both' });
+    cs.set = function (t) { cs.t = t; cs.c.setT(t); };
+    cs.sync = function () { cs.t = Math.round(cs.c.t); };
+    cs.dc = cs.c;
+  }
+  cs.go = function (to, ms, tick) {
+    var r = RUN, from = cs.t, t0 = Date.now();
+    return new Promise(function (ok, no) {
+      var iv = setInterval(function () {
+        if (r !== RUN) { clearInterval(iv); no('stop'); return; }
+        var k = SKIPPING ? 1 : Math.min(1, (Date.now() - t0) / ms), v = from + (to - from) * k; cs.set(v); if (tick) tick(v);
+        if (k >= 1) { clearInterval(iv); ok(); }
+      }, 30);
+    });
+  };
+  cs.clear = function () { var d = cs.dc; d.sector(null); d.sector2(null); d.mark(0); d.glow('h', false); d.glow('m', false); if (cs.hc) { cs.hc.mark(0); cs.hc.arc(null); } };
+  cs.set(t0 || 0);
+  return cs;
+}
+function lab(t, gold) { return t ? '<span class="label' + (gold ? ' gold' : '') + '">' + t + '</span>' : ''; }
+
+/* הסבר מודגם (בלי שאלות) + "הבנתי" / "לראות שוב" */
+function demo(i, layout, t0, run) {
+  var r = screen('<div class="card">' + head(i) + '<div id="lab" class="big"></div><div id="clk"></div><div class="row" id="ctl"></div><button class="replay" id="rp">🔊 לשמוע שוב</button></div>');
+  var $l = document.getElementById('lab'), $c = document.getElementById('ctl');
+  function L(t, gold) { $l.innerHTML = lab(t, gold); }
+  function go() {
+    RUN++; $c.innerHTML = ''; L('');
+    var cs = mkClocks(layout, t0);
+    guard(run(cs, L, function (lay, t) { return mkClocks(lay, t); }).then(function () {
+      $c.innerHTML = '<button class="btn" id="ok">' + gx('הבנתי', 'הבנתי', 'הבנו') + ' ←</button><button class="btn sec" id="again">▶ לראות שוב</button>';
+    }));
+  }
+  $c.addEventListener('click', function (e) { if (e.target.id === 'again') go(); if (e.target.id === 'ok') finish(i); });
+  document.getElementById('rp').onclick = function () { guard(say(lastSay)); };
+  go();
+}
+
+/* מנוע תרגול. cfg: { layout, t0, count | streak, intro(cs,$s), task(k) }
+   משימה: { kind:'choice', key, t, q, qText, ans, opts, a, tip(בחירה), onWrong(cs,בחירה), wk(בחירה) }
+          { kind:'drag', key, t, q, qHtml, ok(cs), a, tip(cs), onWrong(cs) }
+          { kind:'tap',  key, t, q, qText, want:'h'|'m', tip } */
+function practice(i, cfg) {
+  // הערת אבירם 18.11: "בדוק" לא למטה עם גלילה. השעון בצד, השאלה והכפתורים בצד השני, הכל במסך אחד
+  var r = screen('<div class="card">' + head(i) + '<div class="pgrid"><div class="big" id="say"></div><div id="clk"></div><div class="pside"><div class="nudge" id="nudge"></div><div class="opts" id="opts"></div><div class="row" id="ctl"></div><div class="dots" id="dots"></div><div id="msg"></div><button class="replay" id="rp">🔊 לשמוע שוב</button></div></div></div>');
+  $app.className = 'wide';
+  var cs = mkClocks(cfg.layout, cfg.t0), N = cfg.streak || cfg.count, got = 0, k = 0, last = '', T = null, first = true, busy = false;
+  var $s = document.getElementById('say'), $o = document.getElementById('opts'), $m = document.getElementById('msg'), $c = document.getElementById('ctl'), $n = document.getElementById('nudge'), dots = document.getElementById('dots');
+  dots.innerHTML = Array(N + 1).join('<div class="dot"></div>');
+  document.getElementById('rp').onclick = function () { guard(say(lastSay)); };
+  cs.dc.draggable(function () { cs.sync(); $m.innerHTML = ''; cs.dc.sector(null); cs.dc.sector2(null); }, { geared: cfg.layout === 'one' });
+  function paint() { [].forEach.call(dots.children, function (d, j) { d.className = 'dot' + (j < got ? ' on' : ''); }); }
+  function right() {
+    busy = true; cs.dc.canDrag = false; $n.innerHTML = ''; $c.innerHTML = '';
+    if (cfg.streak || first) got++; paint();
+    guard(praise().then(function () { return T.a ? say(T.a) : 0; }).then(function () { return wait(450); }).then(function () { got >= N ? finish(i) : ask(); }));
+  }
+  function wrong(tipHtml, wk) {
+    first = false; ding(false); $m.innerHTML = tipHtml ? '<div class="tip">' + tipHtml + '</div>' : '';
+    if (cfg.streak) {
+      busy = true; cs.dc.canDrag = false; $n.innerHTML = ''; $c.innerHTML = ''; [].forEach.call($o.children, function (x) { x.disabled = true; }); if (cs.c) cs.c.onHand(null);
+      got = 0; paint(); guard(say('checkAgain').then(function () { return wait(1600); }).then(ask));
+    } else guard(say(wk || 'wrong'));
+  }
+  function nudges() {
+    var steps = cfg.layout === 'one' ? [-5, -1, 1, 5] : [-1, 1];
+    $n.innerHTML = steps.map(function (d) { return '<button class="btn sec" data-d="' + d + '">' + (d > 0 ? '+' : '−') + Math.abs(d) + (Math.abs(d) === 1 ? ' דקה' : ' דקות') + '</button>'; }).join('');
+    [].forEach.call($n.children, function (b) { b.onclick = function () {
+      var d = +b.dataset.d, t = Math.round(cs.t);
+      if (cfg.layout === 'two') cs.set(Math.floor(t / 60) * 60 + ((t % 60) + d + 60) % 60);
+      else if (cfg.layout === 'min') cs.set(((t + d) % 60 + 60) % 60);
+      else cs.set(((t + d) % 720 + 720) % 720);
+      $m.innerHTML = ''; cs.dc.sector(null); cs.dc.sector2(null);
+    }; });
+  }
+  function ask() {
+    $m.innerHTML = ''; $o.innerHTML = ''; $c.innerHTML = ''; $n.innerHTML = ''; busy = false; first = true;
+    var tries = 0; do { T = cfg.task(k); } while (T.key === last && ++tries < 10); last = T.key; k++;
+    window.__T = T; window.__cs = cs;   // לבודק האוטומטי
+    cs.clear(); if (cs.c) { cs.c.onHand(null); cs.c.outer(!!T.outer); }
+    cs.set(T.t); if (T.setup) T.setup(cs);
+    cs.dc.canDrag = T.kind === 'drag';
+    if (T.kind === 'choice') {
+      $s.innerHTML = T.qText || 'מה השעה?'; guard(say(T.q));
+      $o.innerHTML = T.opts.map(function (x) { return '<button class="opt">' + x + '</button>'; }).join('');
+      [].forEach.call($o.children, function (b) { b.onclick = function () {
+        if (busy) return;
+        if (b.textContent === T.ans) { b.classList.add('good'); [].forEach.call($o.children, function (x) { x.disabled = true; }); right(); }
+        else { b.classList.add('bad'); b.disabled = true; if (T.onWrong) T.onWrong(cs, b.textContent); wrong(T.tip(b.textContent), T.wk && T.wk(b.textContent)); }
+      }; });
+    } else if (T.kind === 'drag') {
+      $s.innerHTML = T.qHtml; guard(say(T.q)); nudges();
+      $c.innerHTML = '<button class="btn" id="chk">✓ ' + gx('בדוק', 'בדקי', 'בודקים') + '</button>';
+      document.getElementById('chk').onclick = function () { if (busy) return; cs.sync(); if (T.ok(cs)) right(); else { if (T.onWrong) T.onWrong(cs); wrong(T.tip(cs)); } };
+    } else {
+      $s.innerHTML = T.qText; guard(say(T.q));
+      cs.c.onHand(function (w) { if (busy) return; if (w === T.want) { cs.c.onHand(null); cs.c.glow(w, true); right(); } else { cs.c.glow(w, false); wrong(T.tip, 'whBad'); } });
+    }
+  }
+  guard((cfg.intro ? cfg.intro(cs, $s) : Promise.resolve()).then(function () { cs.clear(); ask(); }));
+}
+
+/* ---------- משימות לפי סוג ---------- */
+var HB = Bag();
+function hourNot(x) { var h; do { h = HB(); } while (h === x); return h; }
+function tCount(m) {   // כמה דקות? (שעון הדקות)
+  return { kind: 'choice', key: 'c' + m, t: m, q: ['cntQ'], qText: 'כמה דקות?', ans: fmtM(m),
+    opts: opts4(fmtM(m), [fmtM(m + 1), fmtM(m > 1 ? m - 1 : m + 2), fmtM(m + 2), fmtM(m + 3)]), a: ['c' + m],
+    tip: function () { return '👀 סופרים את הקווים הקטנים, מלמעלה עד המחוג: ' + m + ' קווים = ' + fmtM(m) + '.'; },
+    onWrong: function (cs) { cs.dc.sector(0, m); }, wk: function () { return 'cnt1'; } };
+}
+function tFives(m) {
+  return { kind: 'choice', key: 'f' + m, t: m, q: ['cntQ'], qText: 'כמה דקות?', ans: fmtM(m),
+    opts: opts4(fmtM(m), [fmtM(m + 5), fmtM(m - 5 || 10), fmtM(m + 10 > 59 ? m - 10 : m + 10), fmtM(m / 5)]), a: ['c' + m],
+    tip: function () { return '👀 המחוג מצביע על המספר ' + m + '. כלומר: ' + fmtM(m) + '.'; },
+    onWrong: function (cs) { cs.dc.sector(0, m); cs.dc.mark(m / 5); } };
+}
+function tMix(m) {
+  var f = Math.floor(m / 5) * 5, x = m - f;
+  return { kind: 'choice', key: 'x' + m, t: m, q: ['cntQ'], qText: 'כמה דקות?', ans: fmtM(m),
+    opts: opts4(fmtM(m), [fmtM(m + 1), fmtM(m - 1), fmtM(f), fmtM(f + 5)]), a: ['c' + m],
+    tip: function () { return '👀 קופצים בחמישיות עד ' + f + ', ועוד ' + x + ' קווים = ' + fmtM(m) + '.'; },
+    onWrong: function (cs) { cs.dc.sector(0, f); cs.dc.sector2(f, m); } };
+}
+function tRead(H, m, opt) {   // מה השעה? opt: { hq: חצי/רבע, one: שעון אחד }
+  opt = opt || {}; var hq = !!opt.hq, ans = fmtT(H, m, hq), c = [];
+  if (hq) {
+    [0, 15, 30, 45].forEach(function (mm) { if (mm !== m) c.push(fmtT(H, mm, true)); });
+    c.push(fmtT(wrap(H + 1), m, true)); if (m === 45) c.push('רבע ל-' + H, 'רבע ל-' + H, H + ' ורבע'); else c.push(fmtT(wrap(H - 1), m, true));
+  } else {
+    c.push(fmtT(wrap(H + 1), m), fmtT(wrap(H - 1), m), fmtT(H, m + 5 < 60 ? m + 5 : m - 5));
+    if (opt.one && m % 5 === 0 && m > 0 && m / 5 !== m) c.push(fmtT(H, m / 5), fmtT(H, m / 5));
+    if (opt.one && m % 5 === 0 && m > 0 && H * 5 < 60 && m / 5 !== H) c.push(fmtT(m / 5, H * 5));
+  }
+  return { kind: 'choice', key: H + ':' + m, t: tOf(H, m), q: opt.q || ['whatT'], qText: 'מה השעה?', ans: ans, opts: opts4(ans, c), a: sayT(H, m, hq), outer: opt.outer,
+    tip: function (ch) {
+      if (m === 45 && hq && ch === 'רבע ל-' + H) return '👀 מחוג השעות כבר <b>עבר</b> את ' + H + ' והוא קרוב ל-' + wrap(H + 1) + '. עוד רבע שעה יהיה ' + wrap(H + 1) + ', אז: רבע ל-' + wrap(H + 1) + '.';
+      var hp = '👀 מחוג השעות ' + (m === 0 ? 'מצביע בדיוק על ' + H : 'כבר עבר את ' + H + (m >= 40 ? ' (ועוד לא הגיע ל-' + wrap(H + 1) + ')' : '')) + '. ';
+      if (hq && m === 30) return hp + 'מחוג הדקות על 6: חצי סיבוב = 30 דקות = <b>' + H + ' וחצי</b>.';
+      if (hq && m === 15) return hp + 'מחוג הדקות על 3: רבע סיבוב = 15 דקות = <b>' + H + ' ורבע</b>.';
+      if (hq && m === 45) return hp + 'מחוג הדקות על 9: 45 דקות. נשאר רבע שעה עד ' + wrap(H + 1) + ' = <b>רבע ל-' + wrap(H + 1) + '</b>.';
+      if (m === 0) return hp + 'מחוג הדקות למעלה = <b>' + H + ' בדיוק</b>.';
+      var mp = m % 5 === 0 ? (opt.one ? 'מחוג הדקות על המספר ' + (m / 5) + ' = ' + fmtM(m) : 'מחוג הדקות על ' + m) : 'מחוג הדקות: קופצים בחמישיות עד ' + (Math.floor(m / 5) * 5) + ', ועוד ' + (m % 5) + ' = ' + fmtM(m);
+      return hp + mp + '. ביחד: <b>' + ans + '</b>.';
+    },
+    onWrong: function (cs) { if (cs.c) { cs.c.outer(true); cs.c.sector(0, m); } else { cs.mc.sector(0, m); cs.hc.mark(H); } },
+    wk: function (ch) { return m === 45 && hq && ch === 'רבע ל-' + H ? 'qtTrap' : 'wrong'; } };
+}
+function tDragMin(H, m, intro) {   // שעון הדקות ליד שעון השעות: מזיזים רק את מחוג הדקות
+  var st; do { st = rnd(0, 59); } while (Math.abs(st - m) < 8);
+  return { kind: 'drag', key: 'd' + H + ':' + m, t: tOf(H, st), q: (intro ? ['drg2'] : []).concat(['drgQ2', 'c' + m]),
+    qHtml: 'הזיזו את מחוג הדקות ל: <span class="label gold">' + fmtM(m) + '</span><div class="sub" style="margin:4px 0 0">ואז השעה תהיה: ' + fmtT(H, m) + '</div>', a: sayT(H, m),
+    ok: function (cs) { return Mof(cs.t) === m; },
+    tip: function (cs) { var now = Mof(cs.t); return '👀 עכשיו המחוג על ' + fmtM(now) + '. צריך ' + fmtM(m) + (m % 5 ? ' (בחמישיות עד ' + (Math.floor(m / 5) * 5) + ', ועוד ' + (m % 5) + ')' : '') + '. אפשר לתקן עם הכפתורים.'; } };
+}
+function tDragBoth(H, m, hq, intro) {   // שעון אחד: מזיזים את שני המחוגים
+  var st; do { st = rnd(0, 719); } while (Math.abs(st - tOf(H, m)) < 90);
+  return { kind: 'drag', key: 'D' + H + ':' + m, t: st, q: (intro ? ['drg3'] : []).concat(['drgQ3']).concat(sayT(H, m, hq)),
+    qHtml: 'הזיזו את המחוגים ל: <span class="label gold">' + fmtT(H, m, hq) + '</span>', a: sayT(H, m, hq),
+    ok: function (cs) { return Mof(cs.t) === m && Hof(cs.t) === H; },
+    onWrong: function (cs) { cs.c.outer(true); },
+    tip: function (cs) {
+      var mm = Mof(cs.t), okM = mm === m;
+      var where = m === 0 ? 'למעלה, על 12' : m % 5 === 0 ? 'על המספר ' + (m / 5) + ' (' + fmtM(m) + ')' : 'על ' + fmtM(m);
+      return '👀 ' + (okM ? 'מחוג הדקות במקום ✓. ' : 'מחוג הדקות (הארוך) צריך להיות ' + where + '. ') + (Hof(cs.t) === H ? 'מחוג השעות במקום ✓' : 'מחוג השעות צריך להיות ' + (m === 0 ? 'בדיוק על ' + H : 'אחרי ' + H + ', לפני ' + wrap(H + 1)) + '.') + ' אפשר גם לגרור את מחוג השעות לבד.';
+    } };
+}
+function tTap(want) {
+  var H, m; do { H = HB(); m = rnd(0, 11) * 5; } while (angd(m, (tOf(H, m) / 12) % 60) < 12);
+  return { kind: 'tap', key: want + H + m, t: tOf(H, m), want: want, q: [want === 'h' ? 'whQh' : 'whQm'], qText: want === 'h' ? 'תיגעו ב<b>מחוג השעות</b> (הקצר)' : 'תיגעו ב<b>מחוג הדקות</b> (הארוך, הכחול)',
+    tip: want === 'h' ? '👀 מחוג השעות הוא הקצר והעבה, עם החץ הצהוב.' : '👀 מחוג הדקות הוא הארוך והכחול.' };
+}
+function tNums(n, outer) {
+  var m = n * 5, H = hourNot(n);
+  return { kind: 'choice', key: 'n' + n, t: tOf(H, m), q: ['nmQ'], qText: 'כמה דקות?', ans: fmtM(m), outer: outer,
+    opts: opts4(fmtM(m), [fmtM(n), fmtM(m + 5), fmtM(n * 10 < 60 ? n * 10 : m - 5), fmtM(m > 5 ? m - 5 : m + 10)]), a: ['c' + m],
+    tip: function () { return '👀 מחוג הדקות על המספר ' + n + '. כל מספר = 5 דקות: ' + n + ' × 5 = ' + fmtM(m) + '.'; },
+    onWrong: function (cs) { cs.c.outer(true); cs.c.sector(0, m); } };
+}
+
+/* ---------- שיעור 2: שעון הדקות ---------- */
+function s2Clock(i) {
+  // הערת אבירם 18.11: קודם שעון עם שני המחוגים ("בשעון יש עוד מחוג"), ואז מסתכלים רק על מחוג הדקות. 0 למעלה, ו-60 = שוב 0
+  demo(i, 'one', tOf(4, 10), async function (cs, L, rebuild) {
+    L('מחוג השעות + מחוג הדקות'); cs.c.glow('h', true); var p = say('mc0'); await wait(2600); cs.c.glow('h', false); cs.c.glow('m', true); await p; await wait(300); cs.c.glow('m', false);
+    L('רק מחוג הדקות', true); await say('mc0b');
+    var c = rebuild('min', 0);
+    L('שעון הדקות'); c.mc.glow('m', true); await say('mc1'); c.mc.glow('m', false);
+    c.mc.sector(0, 1); L('קו אחד = דקה אחת'); await say('mc2'); c.mc.sector(null);
+    c.mc.mark(12); L('למעלה: 0 דקות', true); await say('mcZero'); c.mc.mark(0);
+    await say('mc3');
+    await c.go(60, 7000 / RATE, function (v) { c.mc.sector(0, v); });
+    L('סיבוב שלם = 60 דקות = שעה אחת', true); await say('mc4');
+    c.mc.sector(null); c.mc.mark(12); L('60 דקות: חוזרים ל-0'); await say('mcSixty'); c.mc.mark(0);
+  });
+}
+function s2Two(i) {
+  demo(i, 'two', tOf(4, 0), async function (cs, L) {
+    L(''); await say('two1');
+    L('4 בדיוק'); cs.hc.mark(4); await say('two2'); cs.hc.mark(0);
+    var labs = ['4 ודקה', '4 ו-2 דקות', '4 ו-3 דקות'], keys = ['two3', 'two4', 'two5'];
+    for (var j = 0; j < 3; j++) { await cs.go(tOf(4, j + 1), 900, function (v) { cs.mc.sector(0, v % 60); }); L(labs[j]); await say(keys[j]); }
+    await cs.go(tOf(4, 27), 3000, function (v) { cs.mc.sector(0, v % 60); });
+    L('4 ו-27 דקות'); await say(['n4', 'm27']);
+    L('שעון השעות: 4 ומשהו. שעון הדקות: כמה דקות', true); await say('twoRule');
+    // הערת אבירם 18.11: מה זה ה"משהו"? 27 הדקות שעברו. אז השעה: ארבע עשרים ושבע
+    cs.mc.sector(0, 27); L('המשהו = 27 דקות. השעה: ארבע עשרים ושבע', true); await say('two6');
+  });
+}
+function s2Count(i) { practice(i, { layout: 'min', count: 6, task: function (k) { return tCount(k < 2 ? rnd(1, 5) : k < 4 ? rnd(3, 9) : rnd(6, 14)); } }); }
+function s2Fives(i) {
+  practice(i, { layout: 'min', count: 6,
+    intro: async function (cs, $s) {
+      $s.innerHTML = lab('המספרים: כל 5 קווים'); await say('fv1'); await say('fv2');
+      for (var f = 5; f <= 60; f += 5) { await cs.go(f, 500, function (v) { cs.mc.sector(0, v); }); cs.mc.mark(f / 5); $s.innerHTML = lab(f + (f === 60 ? ' = סיבוב שלם' : '')); await say('f' + f); }
+      await wait(500);
+    },
+    task: function () { return tFives(rnd(1, 11) * 5); } });
+}
+function s2Mix(i) {
+  practice(i, { layout: 'min', count: 6,
+    intro: async function (cs, $s) {
+      $s.innerHTML = ''; await say('mx1');
+      for (var f = 5; f <= 25; f += 5) { await cs.go(f, 450, function (v) { cs.mc.sector(0, v); }); cs.mc.mark(f / 5); $s.innerHTML = lab(f); await say('f' + f); }
+      cs.mc.mark(0); await cs.go(26, 500, function (v) { cs.mc.sector2(25, v); }); $s.innerHTML = lab('25 ועוד 1'); await wait(500);
+      await cs.go(27, 500, function (v) { cs.mc.sector2(25, v); }); $s.innerHTML = lab('25 ועוד 2 = 27 דקות', true); await say('mx2'); await wait(600);
+    },
+    task: function () { var m; do { m = rnd(6, 58); } while (m % 5 === 0); return tMix(m); } });
+}
+/* הערת אבירם 18.11: בשני השעונים, קודם שתי דוגמאות איך עושים, ואז שואלים את הילד */
+async function exRead2(cs, $s, H, m) {
+  cs.clear(); cs.set(tOf(H, 0)); $s.innerHTML = lab('?');
+  await cs.go(tOf(H, m), 1500, function (v) { cs.mc.sector(0, v - tOf(H, 0)); }); cs.mc.sector(0, m);
+  cs.hc.mark(H); $s.innerHTML = lab('שעון השעות: ' + H + ' ומשהו'); await say(['rdH', 's' + H]); cs.hc.mark(0);
+  $s.innerHTML = lab('שעון הדקות: ' + fmtM(m)); await say(['rdM', 'c' + m]);
+  $s.innerHTML = lab(fmtT(H, m), true); await say(['rdT', 'n' + H, 'm' + m]); await wait(700);
+}
+function s2Read(i) {
+  practice(i, { layout: 'two', count: 6,
+    intro: async function (cs, $s) { await say('exTwo'); await exRead2(cs, $s, 3, 10); await exRead2(cs, $s, 8, 24); $s.innerHTML = ''; await say('yourTurn'); },
+    task: function (k) { var m = k < 2 ? rnd(1, 11) * 5 : rnd(1, 59); return tRead(HB(), m, { q: k === 0 ? ['rd2Q'] : ['whatT'] }); } });
+}
+async function exDrag2(cs, $s, H, m) {
+  cs.clear(); cs.set(tOf(H, 0)); $s.innerHTML = 'מזיזים את מחוג הדקות ל: ' + lab(fmtM(m), true);
+  await say(['dgEx', 'c' + m]);
+  await cs.go(tOf(H, m), 2200); cs.mc.sector(0, m); cs.mc.glow('m', true);
+  $s.innerHTML = lab(fmtT(H, m), true); await say(['rdT', 'n' + H, 'm' + m]); cs.mc.glow('m', false); await wait(700);
+}
+function s2Drag(i) {
+  practice(i, { layout: 'two', count: 5,
+    intro: async function (cs, $s) { await say('exTwo'); await exDrag2(cs, $s, 4, 20); await exDrag2(cs, $s, 9, 35); $s.innerHTML = ''; await say('yourTurn'); },
+    task: function (k) { return tDragMin(HB(), k < 2 ? rnd(1, 11) * 5 : rnd(1, 59), k === 0); } });
+}
+function s2Check(i) {
+  practice(i, { layout: 'two', streak: 3, intro: function () { return say('check1'); },
+    task: function (k) { var kind = k % 3; if (kind === 0) return tRead(HB(), rnd(1, 59)); if (kind === 1) return tDragMin(HB(), rnd(1, 59)); var m; do { m = rnd(6, 58); } while (m % 5 === 0); var T = tMix(m); T.t = tOf(HB(), m); return T; } });
+}
+
+/* ---------- שיעור 3: שני מחוגים בשעון אחד ---------- */
+function s3Merge(i) {
+  // הערות אבירם 18.11: דוגמה ראשונה שבה המחוגים לא באותו אזור (4 ו-35), ואז: איפה מחוג השעות, איפה מחוג הדקות (מסמנים את הדקות), וקוראים יחד
+  demo(i, 'two', tOf(4, 35), async function (cs, L, rebuild) {
+    L('שעון השעות + שעון הדקות'); await say('mg1');
+    var a = document.getElementById('ckh'), b = document.getElementById('ckm');
+    if (a && b && !SKIPPING) {
+      var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(), w = b.parentNode;
+      w.classList.add('mergefly'); w.style.transform = 'translateX(' + (ra.left - rb.left) + 'px)'; w.style.opacity = '.55';
+      await wait(1700);
+    }
+    var c2 = rebuild('one', tOf(4, 35)); c2.c.outer(true);
+    L('שעון אחד, שני מחוגים', true);
+    c2.c.glow('h', true); var p = say('mg2'); await wait(1900); c2.c.glow('h', false); c2.c.glow('m', true); await p; c2.c.glow('m', false);
+    L('המספרים הכחולים מבחוץ = דקות'); await say('mg3');
+    // איפה מחוג השעות?
+    c2.c.glow('h', true); c2.c.mark(4); c2.c.sector2(20, 25); L('מחוג השעות: אחרי 4 = 4 ומשהו'); await say('mgH'); c2.c.glow('h', false); c2.c.mark(0); c2.c.sector2(null);
+    // איפה מחוג הדקות? מצביעים, ומסמנים את הדקות בחמישיות
+    c2.c.glow('m', true); c2.c.mark(7); L('מחוג הדקות: על המספר 7'); await say('mgM'); c2.c.mark(0);
+    for (var f = 5; f <= 35; f += 5) { c2.c.sector(0, f); L(f + ' דקות'); await say('f' + f); }
+    L('35 דקות', true); await say('c35'); c2.c.glow('m', false);
+    L('4 ו-35 דקות', true); await say(['mgT', 'n4', 'm35']);
+  });
+}
+function s3Round(i) {
+  demo(i, 'one', tOf(4, 0), async function (cs, L) {
+    cs.c.outer(true); L('4 בדיוק'); await say('rnd1');
+    await cs.go(tOf(5, 0), 8000 / RATE, function (v) { var m = v - 240; cs.c.sector(0, m); cs.c.sector2(20, 20 + m / 12); });
+    L('5 בדיוק: עברה שעה אחת', true); await say('rnd2');
+  });
+}
+function s3Which(i) { practice(i, { layout: 'one', count: 6, task: function () { return tTap(Math.random() < .5 ? 'h' : 'm'); } }); }
+function s3Nums(i) {
+  practice(i, { layout: 'one', count: 6, t0: tOf(3, 15),
+    intro: async function (cs, $s) {
+      cs.c.outer(true); cs.c.mark(3); $s.innerHTML = lab('המספר 3: שעה 3, או 15 דקות'); await say('nm1'); cs.c.mark(0);
+      cs.set(tOf(3, 0)); var p = say('nm2');
+      for (var n = 1; n <= 3; n++) { await wait(n === 1 ? 2600 : 1500); await cs.go(tOf(3, n * 5), 500, function (v) { cs.c.sector(0, v % 60); }); cs.c.mark(n); $s.innerHTML = lab(n + ' = ' + n * 5 + ' דקות'); }
+      await p; await wait(500);
+    },
+    task: function (k) { return tNums(rnd(1, 11), k < 3); } });
+}
+// הערת אבירם 18.11: לפני "מה השעה?" מתחילים מ-7 ודקה, 7 ו-2 דקות... עד 7 ו-6 דקות, ועוד כמה דוגמאות
+function s3Read(i) { practice(i, { layout: 'one', count: 6, t0: tOf(7, 0),
+  // הערת אבירם 18.11 (2): כל השעה, דקה אחרי דקה עד 7 ו-59, ואז 8 בדיוק. "הבנתי, ממשיכים" מדלג לשאלות
+  intro: async function (cs, $s) {
+    var stop = false, $c = document.getElementById('ctl');
+    $c.innerHTML = '<button class="btn sec" id="introSkip">' + gx('הבנתי', 'הבנתי', 'הבנו') + ', ממשיכים ←</button>';
+    document.getElementById('introSkip').onclick = function () { stop = true; skipNow(); };
+    var sec = function (v) { cs.c.sector(0, v - tOf(7, 0)); };
+    cs.c.outer(true); $s.innerHTML = lab('7 בדיוק'); await say('r3a');
+    for (var j = 1; j <= 59 && !stop; j++) { await cs.go(tOf(7, j), j <= 6 ? 700 : 350, sec); $s.innerHTML = lab(fmtT(7, j), true); await say(['n7', 'm' + j]); }
+    if (!stop) { await cs.go(tOf(8, 0), 700, sec); $s.innerHTML = lab('8 בדיוק: עברה שעה שלמה', true); await say('h8'); await wait(500); }
+    SKIPPING = false; $c.innerHTML = ''; cs.c.sector(null); $s.innerHTML = ''; await say('yourTurn');
+  },
+  task: function (k) { return tRead(HB(), k < 4 ? rnd(1, 11) * 5 : rnd(1, 59), { one: true, outer: k < 2 }); } }); }
+function s3Drag(i) { practice(i, { layout: 'one', count: 4, task: function (k) { return tDragBoth(HB(), k < 2 ? rnd(1, 11) * 5 : rnd(1, 59), false, k === 0); } }); }
+function s3Check(i) {
+  practice(i, { layout: 'one', streak: 3, intro: function () { return say('check1'); },
+    task: function (k) { var kind = k % 3; if (kind === 0) return tRead(HB(), rnd(1, 11) * 5, { one: true }); if (kind === 1) return tNums(rnd(1, 11), false); return tDragBoth(HB(), rnd(1, 11) * 5, false); } });
+}
+
+/* ---------- שיעור 4: חצי ורבע ---------- */
+function hqQuiz(i, ms, intro, count) {
+  practice(i, { layout: 'one', count: count || 4, t0: tOf(4, 0), intro: intro,
+    task: function (k) { return tRead(HB(), ms[k % ms.length], { hq: true }); } });
+}
+function s4Half(i) {
+  hqQuiz(i, [30, 0, 30, 30], async function (cs, $s) {
+    $s.innerHTML = lab('4 בדיוק');
+    var p = cs.go(tOf(4, 30), 4000 / RATE, function (v) { cs.c.sector(0, v - 240); }); await say('hf1'); await p;
+    $s.innerHTML = lab('4 ו-30 דקות = 4 וחצי', true); await say('hf2');
+    cs.c.sector2(20, 22.5); await say('hf3'); await wait(400);
+  });
+}
+function s4Quarter(i) {
+  hqQuiz(i, [15, 30, 15, 0], async function (cs, $s) {
+    $s.innerHTML = lab('4 בדיוק');
+    var p = cs.go(tOf(4, 15), 3000 / RATE, function (v) { cs.c.sector(0, v - 240); }); await say('qr1'); await p;
+    $s.innerHTML = lab('4 ו-15 דקות = 4 ורבע', true); await say('qr2'); await wait(400);
+  });
+}
+function s4Qto(i) {
+  hqQuiz(i, [45, 15, 45, 45, 30], async function (cs, $s) {
+    $s.innerHTML = lab('4 בדיוק');
+    var p = cs.go(tOf(4, 45), 5000 / RATE, function (v) { cs.c.sector(0, v - 240); }); await say('qto1'); await p;
+    cs.c.sector2(45, 60); $s.innerHTML = lab('רבע לחמש', true); await say('qto2');
+    cs.c.mark(5, '#fde2df'); $s.innerHTML = lab('מחוג השעות קרוב ל-5, אבל עוד לא 5'); await say('qtTrap'); cs.c.mark(0); await wait(400);
+  }, 5);
+}
+function s4Read(i) { var ms = shuffle([0, 15, 30, 45, 15, 30, 45, 45]); practice(i, { layout: 'one', count: 8, task: function (k) { return tRead(HB(), ms[k % 8], { hq: true }); } }); }
+function s4Drag(i) { var ms = [30, 15, 45, 30]; practice(i, { layout: 'one', count: 4, task: function (k) { return tDragBoth(HB(), ms[k % 4], true, k === 0); } }); }
+function s4Check(i) {
+  practice(i, { layout: 'one', streak: 3, intro: function () { return say('check1'); },
+    task: function (k) { var m = [0, 15, 30, 45][rnd(0, 3)]; return k % 3 === 2 ? tDragBoth(HB(), m || 30, true) : tRead(HB(), m, { hq: true }); } });
+}
+
+FN = [[sWords, sFace, sExact, sMove, sSome, sDrag, sCheck],
+  [s2Clock, s2Two, s2Count, s2Fives, s2Mix, s2Read, s2Drag, s2Check],
+  [s3Merge, s3Round, s3Which, s3Nums, s3Read, s3Drag, s3Check],
+  [s4Half, s4Quarter, s4Qto, s4Read, s4Drag, s4Check]];
+
+/* פתיחה ישירה לשלב (מדף הבדיקה): #l=2&s=3 או הודעה { clockGo: [שיעור, שלב] } */
+function boot() {
+  var mm = /l=(\d)(?:&s=(\d+))?/.exec(location.hash || '');
+  if (mm) { var l = +mm[1] - 1, s = mm[2] ? +mm[2] - 1 : -1; if (LESSONS[l]) { if (LESSONS[l].stages[s]) openStage(s, l); else map(l); return; } }
+  // 18.11: מתוך התרגול של נושא בשעון (כפתור "לשיעור") -> נפתח ישר במפה של השיעור של הנושא
+  if (CFG.l && LESSONS[CFG.l - 1]) { map(CFG.l - 1); return; }
+  intro();
+}
+window.addEventListener('message', function (e) {
+  var d = e.data || {}; if (!d.clockGo) return;
+  var l = d.clockGo[0] - 1, s = d.clockGo[1] - 1; SKIPPING = false; if (!LESSONS[l]) return;
+  if (LESSONS[l].stages[s]) openStage(s, l); else map(l);
+});
+
+window.addEventListener('pagehide', stopVoice);
+document.addEventListener('visibilitychange', function () { if (document.hidden) stopVoice(); });
+boot();
+</script>
+</body>
+</html>

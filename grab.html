@@ -435,10 +435,10 @@ body.duo .q .pic { height: min(18vh, 170px) }
     return pcQ(wd(fmt(a) + ' מתוך ' + fmt(w) + '<br>הם כמה אחוזים?'), p, [a, w - a, 100 - p, p + 10, p + 5]);
   } };
   T.pcWord = { name: '💯 הנחה ובעיות אחוזים', g: 2, q: function (lv) {
-    var kind = bag('pcw', ['save', 'after', 'up', 'tot']), p = lv === 1 ? pick([10, 20, 50]) : pick([5, 10, 20, 25, 30, 40, 50]), w = 20 * R(lv === 1 ? 5 : 3, lv === 1 ? 25 : lv === 2 ? 40 : 100), a = w * p / 100, IT = pick(['נעליים', 'אופניים', 'משחק', 'תיק', 'שעון']);
+    var kind = bag('pcw', ['save', 'after', 'up', 'tot']), p = lv === 1 ? pick([10, 20, 50]) : pick([5, 10, 20, 25, 30, 40, 50]), w = 20 * R(lv === 1 ? 5 : 3, lv === 1 ? 25 : lv === 2 ? 40 : 100), a = w * p / 100, IT = pick(['משחק', 'תיק', 'שעון', 'ספר', 'מעיל']);
     if (kind === 'save') return numQ(wd(IT + ' ב-' + fmt(w) + ' שקלים, הנחה של ' + PS(p) + '.<br>בכמה שקלים המחיר יורד?'), a, [w - a, p, a * 2, a + 10, w / 100], 9);
     if (kind === 'after') return numQ(wd(IT + ' ב-' + fmt(w) + ' שקלים, הנחה של ' + PS(p) + '.<br>מה המחיר אחרי ההנחה?'), w - a, [a, w + a, w - p, w - a + 10], 9);
-    if (kind === 'up') return numQ(wd(IT + ' ב-' + fmt(w) + ' שקלים, התייקרו ב-' + PS(p) + '.<br>מה המחיר עכשיו?'), w + a, [w - a, a, w + p, w + a + 10], 9);
+    if (kind === 'up') return numQ(wd(IT + ' ב-' + fmt(w) + ' שקלים, התייקר ב-' + PS(p) + '.<br>מה המחיר עכשיו?'), w + a, [w - a, a, w + p, w + a + 10], 9);
     var q = pick([10, 20, 25, 50]), v = R(2, 40), t = v * 100 / q;
     return numQ(wd(PS(q) + ' של מספר הם ' + fmt(v) + '.<br>מהו המספר?'), t, [v * q, v * 10 === t ? v * 5 : v * 10, v + q, t + 10, t / 2], 9);
   } };
@@ -511,8 +511,50 @@ body.duo .q .pic { height: min(18vh, 170px) }
   function sector(vx, vy, a0, a1, r, col) { var p = AT(vx, vy, a0, r), q = AT(vx, vy, a1, r); return '<path d="M' + P2(vx, vy) + ' L' + P2(p[0], p[1]) + ' A' + r + ' ' + r + ' 0 ' + (a1 - a0 > 180 ? 1 : 0) + ' 0 ' + P2(q[0], q[1]) + ' Z" fill="' + col + '" fill-opacity=".75"/>'; }
   var LN = 'stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none"';
 
+  /*CLK*/
+  // 🕐 שעון (אבירם 18.11): תרגול סופי על כל השעון - שעה בדיוק / ומשהו, דקות לפי מספר, שני מחוגים, וחצי / ורבע / רבע ל.
+  // אותו ציור כמו בשיעורים. השגויות = הטעויות האמיתיות (השעה הבאה כשהמחוג כמעט שם, המספר במקום הדקות, רבע ל-4 במקום רבע ל-5)
+  var CW = function (n) { return ((n - 1) % 12 + 12) % 12 + 1; };
+  function clkSvg(h, m, face) {
+    var o = [], R0 = 150, i, k, a, b, q;
+    var P = function (mm, r) { var t = mm / 60 * 2 * Math.PI; return [(200 + r * Math.sin(t)).toFixed(1), (200 - r * Math.cos(t)).toFixed(1)]; };
+    o.push('<circle cx="200" cy="200" r="162" fill="#1b2a4a" stroke="#fff" stroke-width="4"/><circle cx="200" cy="200" r="150" fill="#fffdf6"/>');
+    if (face === 'h') for (i = 1; i <= 12; i++) { a = P(i * 5, R0 - 6); b = P(i * 5, R0 - 20); o.push('<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" stroke="#1b2a4a" stroke-width="5" stroke-linecap="round"/>'); }
+    else for (k = 0; k < 60; k++) { var big = k % 5 === 0; a = P(k, R0 - 5); b = P(k, R0 - (big ? 22 : 13)); o.push('<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" stroke="' + (big ? '#1b2a4a' : '#8a97b8') + '" stroke-width="' + (big ? 5 : 2.5) + '" stroke-linecap="round"/>'); }
+    for (i = 1; i <= 12; i++) { q = P(i * 5, R0 - 46); o.push('<text x="' + q[0] + '" y="' + (+q[1] + 12).toFixed(1) + '" text-anchor="middle" font-size="34" font-weight="900" fill="#1b2a4a" font-family="Rubik,Arial">' + i + '</text>'); }
+    if (h != null) o.push('<g transform="rotate(' + (h * 30).toFixed(2) + ' 200 200)"><line x1="200" y1="216" x2="200" y2="130" stroke="#1b2a4a" stroke-width="14" stroke-linecap="round"/><path d="M185 134 L200 106 L215 134 Z" fill="#d4a537" stroke="#1b2a4a" stroke-width="3" stroke-linejoin="round"/></g>');
+    if (m != null) o.push('<g transform="rotate(' + (m * 6) + ' 200 200)"><line x1="200" y1="222" x2="200" y2="80" stroke="#2f6fd6" stroke-width="7" stroke-linecap="round"/><path d="M190 84 L200 62 L210 84 Z" fill="#2f6fd6"/></g>');
+    o.push('<circle cx="200" cy="200" r="12" fill="#d4a537" stroke="#1b2a4a" stroke-width="4"/>');
+    return '<svg class="pic clk" viewBox="30 30 340 340" role="img" aria-hidden="true" data-clock="' + (h == null ? '' : (+h).toFixed(3)) + '|' + (m == null ? '' : m) + '">' + o.join('') + '</svg>';
+  }
+  var ctm = function (H, m) { return m === 0 ? H + ' בדיוק' : H + ' ו-' + m + ' דקות'; };
+  var chq = function (H, m) { return m === 0 ? H + ' בדיוק' : m === 15 ? H + ' ורבע' : m === 30 ? H + ' וחצי' : 'רבע ל-' + CW(H + 1); };
+  T.clk = { name: '🕐 שעון: שעות ודקות', g: 2, q: function (lv) {
+    var kd = bag('clk', ['xr', 'xq', 'xh', 'xf', 'xr', 'xq', 'xn']).slice(1), H = R(1, 12), nx = CW(H + 1), pv = CW(H - 1), m, n;
+    if (kd === 'h') { // רק מחוג השעות: בדיוק / ומשהו (גם "כמעט" - עדיין השעה הקודמת)
+      var fr = pick([0, 0, R(20, 60) / 100, R(80, 92) / 100]);
+      return wq(clkSvg(H + fr, null, 'h') + wd('מה השעה?'), fr ? H + ' ומשהו' : H + ' בדיוק', fr ? [nx + ' בדיוק', nx + ' ומשהו', H + ' בדיוק', pv + ' ומשהו'] : [H + ' ומשהו', nx + ' בדיוק', pv + ' ומשהו', nx + ' ומשהו']);
+    }
+    if (kd === 'f') { n = R(1, 11); m = 5 * n; // מחוג הדקות על מספר: כמה דקות? (הטעות: המספר עצמו)
+      return wq(clkSvg(null, m) + wd('מחוג הדקות על ' + n + '. כמה דקות?'), String(m), [String(n), String(m + 5), String(m - 5), String(m + 10), String(m - 10)].filter(function (x) { return +x > 0 && +x < 60; }));
+    }
+    if (kd === 'n') { n = R(1, 12); var t = Math.random() < .5;
+      return wq(wd(t ? 'בשעון, אחרי ' + n + ' בא...' : 'בשעון, לפני ' + n + ' בא...'), String(t ? CW(n + 1) : CW(n - 1)), [String(t ? CW(n - 1) : CW(n + 1)), String(n === 12 ? 13 : n === 1 ? 0 : n), String(CW(n + 2)), String(CW(n - 2))].filter(function (x) { return x !== String(n); }).concat([String(n)]));
+    }
+    if (kd === 'q') { m = pick([0, 15, 30, 45]); // וחצי / ורבע / רבע ל
+      var w = m === 45 ? ['רבע ל-' + H, H + ' ורבע', nx + ' ורבע', nx + ' וחצי'] : m === 30 ? [nx + ' וחצי', 'רבע ל-' + nx, H + ' ורבע', pv + ' וחצי'] : m === 15 ? ['רבע ל-' + H, 'רבע ל-' + nx, H + ' וחצי', nx + ' ורבע'] : [H + ' וחצי', nx + ' בדיוק', 'רבע ל-' + H, H + ' ורבע'];
+      return wq(clkSvg(H % 12 + m / 60, m) + wd('מה השעה?'), chq(H, m), w);
+    }
+    // r: שני מחוגים. עד רמה 2 = בחמישיות, רמה 3 = כל דקה (מ-10). שליש מהפעמים אחרי 40 דקות (מלכודת השעה הבאה)
+    m = lv <= 2 ? (Math.random() < .35 ? 5 * R(8, 11) : 5 * R(1, 7)) : (Math.random() < .35 ? R(40, 59) : R(10, 39)); // במשחק מהיר: עד רמה 2 בחמישיות
+    var ww = [ctm(nx, m), m % 5 === 0 ? ctm(H, m / 5) : ctm(H, m < 59 ? m + 1 : m - 1), ctm(pv, m), ctm(H, m >= 30 ? m - 15 : m + 15)];
+    if (m % 5 === 0 && m / 5 !== H) ww.splice(2, 0, (m / 5) + ' ו-' + (H === 12 ? 0 : H * 5) + ' דקות'); // החלפת המחוגים
+    return wq(clkSvg(H % 12 + m / 60, m) + wd('מה השעה?'), ctm(H, m), ww.filter(function (x) { return !/ו-0 דקות/.test(x); }));
+  } };
+  /*/CLK*/
+
   // 🍕 שברים: מונה, מכנה, שבר פשוט, שבר מדומה, מספר מעורב
-  var FRW = ['מונה', 'מכנה', 'שבר פשוט', 'שבר מדומה', 'מספר מעורב'];
+  var FRW =['מונה', 'מכנה', 'שבר פשוט', 'שבר מדומה', 'מספר מעורב'];
   T.wFrac = { name: '🍕 מילים בשברים', g: 3, q: function () {
     var r = Math.random(), d = R(3, 9), n;
     if (r < .35) { var k = pick(['simple', 'improper', 'mixed']);
@@ -715,6 +757,8 @@ body.duo .q .pic { height: min(18vh, 170px) }
     ['💯 אחוזים', ['pcMean', 'pcOne', 'pcOf', 'pcConv', 'pcWhat', 'pcWord']],
     ['📖 משפחות מילים', ['words', 'wFrac', 'wAngle', 'wTri', 'wQuad', 'wPar']]];
   // 3.11: דף המורים (robot.html): יחס עדיין לא אושר, ונשאר רק אצל הבודקים
+  // 🕐 18.11: קופסת השעון רק כשבשבוע יש נושא שעון, או בדף המורים (CFG.clock). השעון עדיין רק לבודקים במחולל
+  if (CFG.clock || (CFG.topics || []).indexOf('clk') >= 0) GROUPS.push(['🕐 שעון', ['clk']]);
   if (CFG.noRatio) GROUPS = GROUPS.filter(function (g) { return g[1].indexOf('rtRead') < 0 && g[1].indexOf('pcOne') < 0; }); // גם אחוזים (3.11)
   var RECENT = [], LASTANS = null, LASTQ = null;
   function makeQ(topics, lv) {
