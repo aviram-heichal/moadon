@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>מבדק חשבון</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#13254f;--navy2:#1d3670;--gold:#d4a838;--gold2:#f3d98a;--bg:#f7f4ec;--card:#fff;--ink:#13254f;--muted:#5d6785}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:Rubik,Arial,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;min-height:100vh}
+header{background:var(--navy);color:#fff;display:flex;align-items:center;gap:10px;padding:10px 16px;flex-wrap:wrap}
+header h1{font-size:20px;margin:0;font-weight:800;flex:1;min-width:150px}
+header h1 span{color:var(--gold)}
+.hbtn{background:transparent;border:2px solid var(--gold);color:#fff;font:600 16px Rubik,Arial;padding:8px 14px;border-radius:10px;cursor:pointer}
+.hbtn:hover{background:var(--navy2)}
+#chips{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px;background:#fff;border-bottom:1px solid #e6e0cf}
+.chip{border:2px solid #e3dcc6;background:#fff;color:var(--ink);font:600 15px Rubik,Arial;padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip.on{background:var(--gold);border-color:var(--gold);color:var(--navy)}
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:16px}
+.card{background:var(--card);border-radius:28px;box-shadow:0 10px 40px rgba(19,37,79,.12);width:min(1100px,100%);min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;text-align:center;position:relative}
+.tag{position:absolute;top:16px;right:20px;color:var(--muted);font-size:16px;font-weight:600}
+.lead{font-size:clamp(22px,3.4vw,36px);color:var(--muted);margin:0 0 18px;font-weight:600}
+.big{font-size:clamp(56px,11vw,150px);font-weight:800;line-height:1.15;direction:ltr;unicode-bidi:isolate;letter-spacing:1px;word-break:break-word}
+.big.he{direction:rtl;font-size:clamp(40px,7vw,96px)}
+.big .eq{color:var(--gold)}
+.fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 .12em;line-height:1}
+.fr b{display:block;padding:0 .08em}
+.fr b:first-child{border-bottom:.07em solid currentColor;padding-bottom:.04em}
+.fr b:last-child{padding-top:.04em}
+.welcome h2{font-size:clamp(34px,6vw,70px);margin:0 0 14px}
+.welcome p{font-size:clamp(22px,3.2vw,34px);margin:6px 0;color:var(--muted)}
+.shapes{display:flex;gap:40px;justify-content:center;margin-top:20px}
+footer{display:flex;gap:12px;justify-content:center;padding:14px 16px 22px;flex-wrap:wrap}
+.nav{font:800 22px Rubik,Arial;border:0;border-radius:16px;padding:14px 30px;cursor:pointer}
+.next{background:var(--gold);color:var(--navy)}
+.prev{background:#fff;color:var(--navy);border:2px solid #d9d2bb}
+.nav:disabled{opacity:.35;cursor:default}
+.hint{color:var(--muted);font-size:14px;text-align:center;padding-bottom:10px}
+@media (max-width:600px){.nav{padding:12px 18px;font-size:19px}.tag{position:static;margin-bottom:10px}}
+</style>
+</head>
+<body>
+<header>
+  <button class="hbtn" id="exitBtn" title="יציאה">✕ יציאה</button>
+  <h1>🧮 מבדק חשבון <span>| העוצמה בחינוך</span></h1>
+  <button class="hbtn" id="homeBtn">→ חזרה להתחלה</button>
+  <button class="hbtn" id="fsBtn">⛶ מסך מלא</button>
+</header>
+<div id="chips"></div>
+<main><div class="card" id="card"></div></main>
+<footer>
+  <button class="nav prev" id="prevBtn">→ הקודם</button>
+  <button class="nav next" id="nextBtn">הבא ←</button>
+</footer>
+<div class="hint">מקשים: חץ שמאלה / רווח = הבא · חץ ימינה = הקודם</div>
+<script>
+// כל שלב = אותו סדר כמו בלשונית "מבדק חשבון" בגיליון. אין כאן תשובות.
+var STAGES=[
+ {n:1,t:"חיבור וחיסור",items:["3 + 2","5 + 4","10 - 4","9 + 3","8 + 5","7 + 6","12 - 5","18 + 6","27 + 4","100 - 12"]},
+ {n:2,t:"כפל",items:["10 × 3","4 × 5","5 × 5","6 × 8","7 × 6","8 × 8","9 × 7","8 × 7"]},
+ {n:3,t:"חילוק",items:["6 : 2","24 : 4","42 : 6","56 : 7"]},
+ {n:4,t:"קריאת מספרים",lead:"קראו בקול את המספר:",groups:[
+   ["א'-ב'",["12","20","95","100","120","102","205","650","906","1,000"]],
+   ["ג'-ד'",["605","980","1,205","2,026","2,505","6,000","10,000"]],
+   ["ד'-ה'",["12,025","20,040","25,040","80,001","82,060","90,004","120,060"]],
+   ["ה'-ו'",["600,001","600,020","1,040,004","1,062,004","6,025,040"]],
+   ["ו'-ז'",["12,025,004","12,050,040","32,004,004"]]]},
+ {n:5,t:"כתיבת מספר",lead:"✏️ כתבו בספרות (בצ'אט או על דף):",he:true,items:["מאה ושתיים","אלפיים עשרים ושש","שנים עשר אלף עשרים וחמש","שש מאות ואחד אלף ושבעים","שני מיליון שש מאות ואחד אלף ושבעים"]},
+ {n:6,t:"סדר פעולות",lead:"✏️ העתיקו לדף ופתרו:",items:["6 + 3 × 4 - 9 : (2 + 1)","6 + 3 × 4","6 + 4 × 3 - 5"]},
+ {n:7,t:"שברים",items:[{he:"שליש ועוד שליש = ?"},{he:"מה יותר גדול: חצי או שליש?"},{he:"ציירו שליש בעיגול ובריבוע",shapes:true},"1/3 + 1/4"]},
+ {n:8,t:"מספרים מכוונים",items:["-6 + 7","-7 + 1","-3 - 4","-3 - 1","-5 × 2","-4 × (-3)"]},
+ {n:9,t:"אחוזים",he:true,items:["2% של 600","חצי של 200","שליש של 300","עשירית של 60","מאית של 600","1% של 600","5% של 700","8% של 500"]},
+ {n:10,t:"סוגריים עם X",lead:"פתחו סוגריים:",items:["2(X + 2)","3 - (4 - X)","6(X + 5) × 2"]}
+];
+// בונים רשימה שטוחה של מסכים
+var SLIDES=[{welcome:true}];
+STAGES.forEach(function(s,si){
+  if(s.groups){var k=0;s.groups.forEach(function(g){g[1].forEach(function(x,i){SLIDES.push({si:si,txt:x,label:"כיתות "+g[0]+" · "+(i+1)+"/"+g[1].length,lead:s.lead});});});}
+  else s.items.forEach(function(x,i){
+    var o=typeof x==="string"?{txt:x}:{txt:x.he,he:true,shapes:x.shapes};
+    if(s.he)o.he=true;
+    o.si=si;o.label="תרגיל "+(i+1)+" מתוך "+s.items.length;o.lead=s.lead;SLIDES.push(o);});
+});
+var cur=0;
+function esc(t){return t.replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}
+function mathHtml(t){
+  var h=esc(t).replace(/(\d+)\/(\d+)/g,'<span class="fr"><b>$1</b><b>$2</b></span>');
+  return h+' <span class="eq">= ?</span>';
+}
+function shapesSvg(){
+  return '<div class="shapes"><svg width="170" height="170" viewBox="0 0 170 170"><circle cx="85" cy="85" r="78" fill="none" stroke="#13254f" stroke-width="6"/></svg>'+
+         '<svg width="160" height="160" viewBox="0 0 160 160"><rect x="5" y="5" width="150" height="150" fill="none" stroke="#13254f" stroke-width="6"/></svg></div>';
+}
+function render(){
+  var s=SLIDES[cur],c=document.getElementById('card');
+  if(s.welcome){
+    c.innerHTML='<div class="welcome"><h2>שלום! 👋</h2><p>עכשיו נעשה כמה תרגילים.</p><p>בהתחלה מצחיקים, אחר כך פחות 😉</p><p>מה שיודעים אומרים, מה שלא - עוברים הלאה.</p><p><b>זה לא מבחן!</b></p></div>';
+  }else{
+    var st=STAGES[s.si];
+    var body=s.he?'<div class="big he">'+esc(s.txt)+'</div>':'<div class="big">'+mathHtml(s.txt)+'</div>';
+    c.innerHTML='<div class="tag">שלב '+st.n+' · '+st.t+' · '+s.label+'</div>'+(s.lead?'<p class="lead">'+s.lead+'</p>':'')+body+(s.shapes?shapesSvg():'');
+  }
+  document.getElementById('prevBtn').disabled=cur===0;
+  document.getElementById('nextBtn').disabled=cur===SLIDES.length-1;
+  var act=s.welcome?-1:s.si;
+  Array.prototype.forEach.call(document.querySelectorAll('.chip'),function(b,i){b.classList.toggle('on',i===act);});
+  try{history.replaceState(null,'','#'+cur);}catch(e){}
+}
+function go(i){cur=Math.max(0,Math.min(SLIDES.length-1,i));render();}
+var chips=document.getElementById('chips');
+STAGES.forEach(function(s,si){
+  var b=document.createElement('button');b.className='chip';b.textContent=s.n+'. '+s.t;
+  b.onclick=function(){for(var i=0;i<SLIDES.length;i++)if(SLIDES[i].si===si){go(i);break;}};
+  chips.appendChild(b);
+});
+document.getElementById('nextBtn').onclick=function(){go(cur+1);};
+document.getElementById('prevBtn').onclick=function(){go(cur-1);};
+document.getElementById('homeBtn').onclick=function(){go(0);};
+document.getElementById('fsBtn').onclick=function(){
+  if(document.fullscreenElement){document.exitFullscreen();}else if(document.documentElement.requestFullscreen){document.documentElement.requestFullscreen();}
+};
+document.getElementById('exitBtn').onclick=function(){
+  if(document.fullscreenElement)document.exitFullscreen();
+  window.close();
+  setTimeout(function(){ if(history.length>1)history.back(); else document.getElementById('card').innerHTML='<div class="welcome"><h2>סיימנו 👏</h2><p>אפשר לסגור את הלשונית.</p></div>'; },300);
+};
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowLeft'||e.key===' '||e.key==='PageDown'){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowRight'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home'){go(0);}
+});
+var h=parseInt((location.hash||'').slice(1),10); if(!isNaN(h))cur=Math.max(0,Math.min(SLIDES.length-1,h));
+render();
+</script>
+</body>
+</html>
