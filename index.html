@@ -101,7 +101,10 @@ footer.f .ahchip { display: inline-block; background: #fff; border-radius: 14px;
 (function () {
   'use strict';
   var API = "https://script.google.com/macros/s/AKfycbx9VEANkpfuMCsm3b2cQ2Y2oO7zpYqWBzh0WGQCb6dGzxj4eoNbY8PcjLfmzz9ZX1y_eg/exec";            // כתובת החלק שבענן (Apps Script)
-  var BIN = "g-bcd0ee3a7c.bin";            // המחולל המוצפן
+  var BIN = "g-909fa6b83c.bin";            // המחולל המוצפן
+  var FBIN = "f-67465a7a28.bin";          // 🧠 26.11: השיעור הראשון בחשבון למורים (#first), קובץ מוצפן נפרד
+  var firstMode = /^#first(?:&|$)/.test(location.hash);
+  function firstOk() { var a = store.get('club-acct'); return !!(a && (a.teacher || /^(aviram@a-h\.co\.il|orit@a-h\.co\.il|benheichal@gmail\.com)$/.test(String(a.email || '').toLowerCase()))); }
   var GOOGLE_ID = "";   // ריק = בלי כפתור גוגל
   var KEY_PARENT_H = 24, KEY_KID_D = 7;
 
@@ -157,8 +160,14 @@ footer.f .ahchip { display: inline-block; background: #fff; border-radius: 14px;
   function reload() { stop = true; location.reload(); }
   function b64(s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
   function run(key) {
-    loading('פותחים את המחולל...');
-    return fetch(BIN).then(function (r) { if (!r.ok) throw new Error('bin'); return r.arrayBuffer(); }).then(function (buf) {
+    var useFirst = firstMode && !kidMode;
+    if (useFirst && !firstOk()) {
+      card.innerHTML = '<h2>השיעור הזה פתוח למורים בלבד 🔒</h2><p>נכנסתם עם חשבון שאינו של מורה.</p><button class="go" type="button" id="toGen">→ למחולל האימונים</button>';
+      document.getElementById('toGen').onclick = function () { location.href = base(); };
+      return Promise.resolve();
+    }
+    loading(useFirst ? 'פותחים את השיעור הראשון...' : 'פותחים את המחולל...');
+    return fetch(useFirst ? FBIN : BIN).then(function (r) { if (!r.ok) throw new Error('bin'); return r.arrayBuffer(); }).then(function (buf) {
       var u = new Uint8Array(buf);
       return crypto.subtle.importKey('raw', b64(key), 'AES-GCM', false, ['decrypt'])
         .then(function (k) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.slice(0, 12) }, k, u.slice(12)); });
@@ -404,6 +413,7 @@ footer.f .ahchip { display: inline-block; background: #fff; border-radius: 14px;
     card.innerHTML = '<h2>הדפדפן הזה ישן מדי 😕</h2><p>פתחו את הקישור בכרום או בספארי מעודכנים.</p>';
     return;
   }
+  if (firstMode && !kidMode) { document.title = 'השיעור הראשון בחשבון · למורים'; heroSay('השיעור הראשון בחשבון', 'כניסה למורים, עם המשתמש של המחולל'); }
   if (kidMode) kidStart(); else parentStart();
 })();
 </script>
